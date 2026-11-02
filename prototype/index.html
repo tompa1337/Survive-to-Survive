@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survive to Survive – Prototyp 0.1</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: "Trebuchet MS", system-ui, sans-serif; color: #f4e9d8; user-select: none; }
+  canvas { display: block; }
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #stats { position: absolute; top: 16px; left: 16px; width: 220px; }
+  .bar { margin-bottom: 8px; }
+  .bar label { font-size: 13px; letter-spacing: .5px; text-shadow: 0 1px 2px #000; display: flex; justify-content: space-between; }
+  .bar .track { height: 10px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.25); border-radius: 6px; overflow: hidden; }
+  .bar .fill { height: 100%; transition: width .2s; }
+  #clock { position: absolute; top: 16px; right: 16px; text-align: right; text-shadow: 0 1px 3px #000; font-size: 15px; }
+  #clock b { font-size: 20px; display: block; }
+  #inv { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
+  .slot { background: rgba(30,20,10,.65); border: 1px solid rgba(255,220,170,.35); border-radius: 8px; padding: 6px 12px; min-width: 74px; text-align: center; font-size: 13px; }
+  .slot b { display: block; font-size: 20px; }
+  #cross { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 0 3px #000; }
+  #prompt { position: absolute; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); font-size: 15px; text-shadow: 0 1px 3px #000; white-space: nowrap; }
+  #toasts { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); text-align: center; }
+  .toast { font-size: 15px; text-shadow: 0 1px 3px #000; animation: fade 2.6s forwards; }
+  @keyframes fade { 0%,70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+  #help { position: absolute; bottom: 18px; right: 16px; font-size: 12px; line-height: 1.6; text-align: right; opacity: .8; text-shadow: 0 1px 2px #000; }
+  #help kbd { background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.3); border-radius: 4px; padding: 0 5px; font-family: inherit; }
+  #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(40,22,8,.82), rgba(0,0,0,.94)); cursor: pointer; }
+  #overlay .box { max-width: 560px; text-align: center; padding: 24px; }
+  #overlay h1 { font-size: 46px; margin: 0 0 4px; letter-spacing: 2px; color: #ffb35c; text-shadow: 0 0 22px rgba(255,120,30,.5); }
+  #overlay .sub { opacity: .75; margin-bottom: 22px; }
+  #overlay .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; text-align: left; margin: 0 auto 24px; width: fit-content; font-size: 15px; }
+  #overlay kbd { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); border-radius: 4px; padding: 1px 7px; font-family: inherit; }
+  #overlay .go { display: inline-block; background: #d9682b; color: #fff; padding: 12px 28px; border-radius: 30px; font-size: 18px; font-weight: bold; }
+  #vignette { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 160px rgba(120,0,0,0); transition: box-shadow .4s; }
+</style>
+</head>
+<body>
+<div id="vignette"></div>
+<div id="hud">
+  <div id="stats">
+    <div class="bar"><label><span>❤ Hälsa</span><span id="hpv"></span></label><div class="track"><div class="fill" id="hp" style="background:#d9473a"></div></div></div>
+    <div class="bar"><label><span>🍖 Hunger</span><span id="huv"></span></label><div class="track"><div class="fill" id="hu" style="background:#d9a03a"></div></div></div>
+    <div class="bar"><label><span>🔥 Värme</span><span id="wav"></span></label><div class="track"><div class="fill" id="wa" style="background:#e8743a"></div></div></div>
+  </div>
+  <div id="clock"><b id="day">Dag 1</b><span id="tod"></span></div>
+  <div id="cross"></div>
+  <div id="prompt"></div>
+  <div id="toasts"></div>
+  <div id="inv">
+    <div class="slot">🪵 Trä<b id="iwood">0</b></div>
+    <div class="slot">🪨 Sten<b id="istone">0</b></div>
+    <div class="slot">🫐 Bär<b id="iberry">0</b></div>
+    <div class="slot" id="axeslot" style="opacity:.4">🪓 Stenyxa<b id="iaxe">–</b></div>
+  </div>
+  <div id="help">
+    <kbd>Klick</kbd>/<kbd>E</kbd> samla · <kbd>Q</kbd> ät bär<br>
+    <kbd>C</kbd> stenyxa (3 trä, 2 sten)<br>
+    <kbd>F</kbd> lägereld (5 trä, 3 sten) · <kbd>E</kbd> vid eld: lägg på trä<br>
+    <kbd>Shift</kbd> spring · <kbd>Space</kbd> hoppa · <kbd>Esc</kbd> paus
+  </div>
+</div>
+<div id="overlay">
+  <div class="box">
+    <h1>SURVIVE TO SURVIVE</h1>
+    <div class="sub">Prototyp 0.1 · Stenåldern · Överlev nätterna</div>
+    <div class="keys">
+      <kbd>WASD</kbd><span>Gå</span>
+      <kbd>Mus</kbd><span>Titta runt</span>
+      <kbd>Klick / E</kbd><span>Hugg träd, bryt sten, plocka bär</span>
+      <kbd>C</kbd><span>Tillverka stenyxa: samlar dubbelt så snabbt</span>
+      <kbd>F</kbd><span>Bygg lägereld: värme och ljus på natten</span>
+      <kbd>E</kbd><span>(vid elden) Lägg på trä så den inte slocknar</span>
+      <kbd>Q</kbd><span>Ät bär</span>
+    </div>
+    <div class="go" id="gotext">Klicka för att börja</div>
+  </div>
+</div>
+
+<script src="lib/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+
+// ---------- Grund ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x9ec9e8, 40, 170);
+const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 600);
+camera.rotation.order = 'YXZ';
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Deterministisk slump så världen blir likadan varje gång
+let seed = 1337;
+const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+
+// ---------- Terräng ----------
+const WORLD = 360;
+function height(x, z) {
+  return Math.sin(x * 0.045) * 2.4 + Math.cos(z * 0.038) * 2.2
+       + Math.sin((x + z) * 0.11) * 0.7 + Math.cos((x - z) * 0.021) * 3.5;
+}
+const lake = { x: 40, z: -50, r: 22 };
+function groundY(x, z) {
+  let h = height(x, z);
+  const d = Math.hypot(x - lake.x, z - lake.z);
+  if (d < lake.r + 10) h -= Math.max(0, 1 - d / (lake.r + 10)) * 6;
+  return h;
+}
+{
+  const geo = new THREE.PlaneGeometry(WORLD, WORLD, 140, 140);
+  geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position;
+  const colors = [];
+  const c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i);
+    const y = groundY(x, z);
+    pos.setY(i, y);
+    if (y < -1.2) c.setHex(0xc9b27a);              // strand
+    else if (y > 5) c.setHex(0x8a8f6a);            // höjd
+    else c.setHSL(0.24 + rand() * 0.04, 0.42, 0.30 + rand() * 0.06);
+    colors.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geo.computeVertexNormals();
+  const ground = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const water = new THREE.Mesh(new THREE.CircleGeometry(lake.r + 6, 40),
+    new THREE.MeshLambertMaterial({ color: 0x3f7fa6, transparent: true, opacity: 0.82 }));
+  water.rotation.x = -Math.PI / 2;
+  water.position.set(lake.x, -1.6, lake.z);
+  scene.add(water);
+}
+
+// ---------- Ljus, himmel, dag/natt ----------
+const hemi = new THREE.HemisphereLight(0xcfe8ff, 0x4a3a20, 0.7);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff1d6, 1.2);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, near: 1, far: 260 });
+scene.add(sun, sun.target);
+
+const stars = (() => {
+  const g = new THREE.BufferGeometry(); const p = [];
+  for (let i = 0; i < 900; i++) {
+    const t = rand() * Math.PI * 2, u = rand() * 0.9 + 0.1;
+    const r = 280;
+    p.push(Math.cos(t) * Math.sqrt(1 - u * u) * r, u * r, Math.sin(t) * Math.sqrt(1 - u * u) * r);
+  }
+  g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+  const m = new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0, fog: false });
+  const s = new THREE.Points(g, m); scene.add(s); return s;
+})();
+const moon = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16), new THREE.MeshBasicMaterial({ color: 0xeef2ff, fog: false }));
+scene.add(moon);
+
+const DAY_LEN = 240;            // sekunder per dygn
+let timeOfDay = 0.30;           // 0 = midnatt, 0.25 soluppgång, 0.5 mitt på dagen, 0.75 solnedgång
+let dayCount = 1;
+const skyDay = new THREE.Color(0x9ec9e8), skyDusk = new THREE.Color(0xe88a4a), skyNight = new THREE.Color(0x0a1022);
+const skyCol = new THREE.Color();
+
+function updateSky() {
+  const a = (timeOfDay - 0.25) * Math.PI * 2;   // 0 vid soluppgång
+  const sunH = Math.sin(a);                       // -1..1
+  const p = camera.position;
+  sun.position.set(p.x + Math.cos(a) * 120, p.y + sunH * 140, p.z + 40);
+  sun.target.position.copy(p);
+  moon.position.set(p.x - Math.cos(a) * 250, p.y - sunH * 200, p.z - 60);
+
+  const day = THREE.MathUtils.clamp(sunH * 2.5 + 0.3, 0, 1);
+  const dusk = Math.max(0, 1 - Math.abs(sunH) * 4) * (sunH > -0.25 ? 1 : 0);
+  skyCol.copy(skyNight).lerp(skyDay, day).lerp(skyDusk, dusk * 0.55);
+  scene.background = skyCol; scene.fog.color.copy(skyCol);
+  sun.intensity = 1.25 * day;
+  hemi.intensity = 0.12 + 0.6 * day;
+  stars.material.opacity = 1 - day;
+  stars.position.copy(p);
+  return { night: day < 0.25, day };
+}
+
+// ---------- Resurser ----------
+const resources = [];
+const matTrunk = new THREE.MeshLambertMaterial({ color: 0x6b4426, flatShading: true });
+const matLeaf  = [0x2f5d2a, 0x386b2c, 0x2a5233].map(c => new THREE.MeshLambertMaterial({ color: c, flatShading: true }));
+const matRock  = new THREE.MeshLambertMaterial({ color: 0x8c8a83, flatShading: true });
+const matBush  = new THREE.MeshLambertMaterial({ color: 0x3c6e2f, flatShading: true });
+const matBerry = new THREE.MeshLambertMaterial({ color: 0x5b2a8c, emissive: 0x1a0830 });
+
+function farFromSpawn(x, z) { return Math.hypot(x, z) > 7 && Math.hypot(x - lake.x, z - lake.z) > lake.r + 4; }
+
+function makeTree(x, z) {
+  const g = new THREE.Group();
+  const s = 0.8 + rand() * 0.6;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.32 * s, 3 * s, 6), matTrunk);
+  trunk.position.y = 1.5 * s; trunk.castShadow = true; g.add(trunk);
+  const leaf = matLeaf[Math.floor(rand() * 3)];
+  for (let i = 0; i < 3; i++) {
+    const cone = new THREE.Mesh(new THREE.ConeGeometry((1.9 - i * 0.45) * s, 2.4 * s, 7), leaf);
+    cone.position.y = (3 + i * 1.25) * s; cone.castShadow = true; g.add(cone);
+  }
+  g.position.set(x, groundY(x, z) - 0.1, z);
+  g.rotation.y = rand() * 6;
+  return addRes(g, { type: 'tree', hp: 5, label: 'Träd', radius: 0.5 });
+}
+function makeRock(x, z) {
+  const s = 0.7 + rand() * 0.9;
+  const m = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), matRock);
+  m.scale.set(1.2, 0.8, 1); m.rotation.set(rand(), rand() * 6, rand());
+  m.castShadow = true; m.receiveShadow = true;
+  m.position.set(x, groundY(x, z) + s * 0.35, z);
+  return addRes(m, { type: 'rock', hp: 6, label: 'Stenblock', radius: s * 0.9 });
+}
+function makeBush(x, z) {
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 0), matBush);
+  b.scale.y = 0.75; b.position.y = 0.45; b.castShadow = true; g.add(b);
+  const berries = new THREE.Group();
+  for (let i = 0; i < 9; i++) {
+    const be = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), matBerry);
+    const t = rand() * 6.28, u = rand() * 0.8;
+    be.position.set(Math.cos(t) * 0.68, 0.35 + u * 0.4, Math.sin(t) * 0.68);
+    berries.add(be);
+  }
+  g.add(berries);
+  g.position.set(x, groundY(x, z), z);
+  return addRes(g, { type: 'bush', hp: 3, label: 'Bärbuske', berries, regrow: 0, radius: 0.6 });
+}
+function addRes(obj, data) {
+  obj.userData.res = data; data.obj = data.obj || obj; data.base = obj.position.clone();
+  scene.add(obj); resources.push(data); return data;
+}
+for (let i = 0; i < 380; i++) {
+  const x = (rand() - 0.5) * (WORLD - 30), z = (rand() - 0.5) * (WORLD - 30);
+  if (!farFromSpawn(x, z)) continue;
+  const r = rand();
+  if (r < 0.62) makeTree(x, z); else if (r < 0.82) makeRock(x, z); else makeBush(x, z);
+}
+// garanterade saker nära start
+makeTree(6, -5); makeTree(-6, -7); makeRock(3, -9); makeBush(-3, -6); makeBush(8, 2);
+
+// ---------- Spelare ----------
+const player = { pos: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(), yaw: Math.PI, pitch: 0, onGround: false };
+player.pos.y = groundY(0, 0);
+const stats = { hp: 100, hunger: 85, warmth: 80 };
+const inv = { wood: 0, stone: 0, berry: 0, axe: false };
+const keys = {};
+let running = false, dead = false, gatherCd = 0;
+
+// ---------- Lägereldar ----------
+const fires = [];
+const matLog = new THREE.MeshLambertMaterial({ color: 0x4b2e17, flatShading: true });
+const matFlame = new THREE.MeshBasicMaterial({ color: 0xffa23a, transparent: true, opacity: 0.9 });
+const matFlame2 = new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.9 });
+const matStoneRing = new THREE.MeshLambertMaterial({ color: 0x77736a, flatShading: true });
+function buildFire(x, z) {
+  const g = new THREE.Group();
+  for (let i = 0; i < 8; i++) {
+    const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), matStoneRing);
+    st.position.set(Math.cos(i / 8 * 6.28) * 0.75, 0.1, Math.sin(i / 8 * 6.28) * 0.75); g.add(st);
+  }
+  for (let i = 0; i < 4; i++) {
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.1, 5), matLog);
+    log.rotation.z = Math.PI / 2.6; log.rotation.y = i * Math.PI / 2; log.position.y = 0.25; g.add(log);
+  }
+  const flame = new THREE.Mesh(new THREE.ConeGeometry(0.38, 1.1, 6), matFlame); flame.position.y = 0.65; g.add(flame);
+  const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 5), matFlame2); flame2.position.y = 0.55; g.add(flame2);
+  const light = new THREE.PointLight(0xff8a3a, 2.5, 22, 1.6); light.position.y = 1.2; g.add(light);
+  g.position.set(x, groundY(x, z), z);
+  scene.add(g);
+  const f = { g, flame, flame2, light, fuel: 120, x, z };
+  fires.push(f); return f;
+}
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+function toast(msg) {
+  const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg;
+  $('toasts').appendChild(d); setTimeout(() => d.remove(), 2600);
+}
+function updateUI(night) {
+  $('hp').style.width = stats.hp + '%'; $('hpv').textContent = Math.ceil(stats.hp);
+  $('hu').style.width = stats.hunger + '%'; $('huv').textContent = Math.ceil(stats.hunger);
+  $('wa').style.width = stats.warmth + '%'; $('wav').textContent = Math.ceil(stats.warmth);
+  $('iwood').textContent = inv.wood; $('istone').textContent = inv.stone; $('iberry').textContent = inv.berry;
+  $('iaxe').textContent = inv.axe ? '✓' : '–'; $('axeslot').style.opacity = inv.axe ? 1 : 0.4;
+  $('day').textContent = 'Dag ' + dayCount;
+  const h = Math.floor(timeOfDay * 24), m = Math.floor((timeOfDay * 24 - h) * 60);
+  $('tod').textContent = (night ? '🌙 ' : '☀️ ') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  const danger = Math.min(1, Math.max(0, (40 - stats.hp) / 40));
+  $('vignette').style.boxShadow = `inset 0 0 160px rgba(140,0,0,${danger * 0.8})`;
+}
+
+// ---------- Input ----------
+const canvas = renderer.domElement;
+const overlay = $('overlay');
+let pointerOk = true, dragging = false, dragMoved = 0;
+
+function start() {
+  if (dead) location.reload();
+  running = true; overlay.style.display = 'none';
+  if (pointerOk && canvas.requestPointerLock) {
+    try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { pointerOk = false; }); }
+    catch (e) { pointerOk = false; }
+  }
+}
+overlay.addEventListener('click', start);
+document.addEventListener('pointerlockerror', () => { pointerOk = false; });
+document.addEventListener('pointerlockchange', () => {
+  if (!document.pointerLockElement && running && pointerOk && !dead) pause();
+});
+function pause() { running = false; overlay.style.display = 'flex'; $('gotext').textContent = 'Paus – klicka för att fortsätta'; }
+
+addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (!running) return;
+  if (e.code === 'KeyE') interact();
+  if (e.code === 'KeyQ') eat();
+  if (e.code === 'KeyC') craftAxe();
+  if (e.code === 'KeyF') placeFire();
+  if (e.code === 'Space' && player.onGround) { player.vel.y = 6.5; player.onGround = false; }
+  if (e.code === 'Escape' && !pointerOk) pause();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+canvas.addEventListener('mousedown', () => { dragging = true; dragMoved = 0; });
+addEventListener('mouseup', () => {
+  if (running && (document.pointerLockElement || dragMoved < 6)) interact();
+  dragging = false;
+});
+addEventListener('mousemove', e => {
+  if (!running) return;
+  const locked = document.pointerLockElement === canvas;
+  if (!locked && !dragging) return;
+  dragMoved += Math.abs(e.movementX) + Math.abs(e.movementY);
+  const k = locked ? 0.0022 : 0.004;
+  player.yaw -= e.movementX * k;
+  player.pitch = THREE.MathUtils.clamp(player.pitch - e.movementY * k, -1.45, 1.45);
+});
+
+// ---------- Handlingar ----------
+const ray = new THREE.Raycaster(); ray.far = 3.8;
+const center = new THREE.Vector2(0, 0);
+function lookTarget() {
+  ray.setFromCamera(center, camera);
+  const objs = resources.filter(r => !r.gone).map(r => r.obj).concat(fires.map(f => f.g));
+  const hit = ray.intersectObjects(objs, true)[0];
+  if (!hit) return null;
+  let o = hit.object;
+  while (o && !o.userData.res && !fires.some(f => f.g === o)) o = o.parent;
+  if (!o) return null;
+  if (o.userData.res) return { res: o.userData.res };
+  return { fire: fires.find(f => f.g === o) };
+}
+function interact() {
+  const nowMs = performance.now(); if (nowMs < gatherCd || dead) return;
+  const t = lookTarget(); if (!t) return;
+  gatherCd = nowMs + 380;
+  if (t.fire) {
+    if (inv.wood < 1) { toast('Du behöver trä för att mata elden'); return; }
+    inv.wood--; t.fire.fuel = Math.min(300, t.fire.fuel + 45); toast('🔥 Elden flammar upp (+45 s)'); return;
+  }
+  const r = t.res; const power = inv.axe ? 2 : 1;
+  r.shake = 0.25;
+  if (r.type === 'tree') {
+    const got = power; inv.wood += got; r.hp -= power;
+    toast(`+${got} trä`);
+    if (r.hp <= 0) { inv.wood += 2; toast('Trädet föll! +2 trä'); fell(r); }
+  } else if (r.type === 'rock') {
+    inv.stone += power; r.hp -= power; toast(`+${power} sten`);
+    if (r.hp <= 0) { r.gone = true; scene.remove(r.obj); }
+    else r.obj.scale.multiplyScalar(0.92);
+  } else if (r.type === 'bush') {
+    if (r.hp <= 0) { toast('Busken är tom – den växer tillbaka'); return; }
+    r.hp--; inv.berry += 2; toast('+2 bär');
+    const kids = r.berries.children; for (let i = 0; i < 3 && kids.length; i++) r.berries.remove(kids[kids.length - 1]);
+    if (r.hp <= 0) r.regrow = 60;
+  }
+}
+function fell(r) { r.gone = true; r.falling = 0; }
+function eat() {
+  if (inv.berry < 1) { toast('Du har inga bär'); return; }
+  if (stats.hunger > 97) { toast('Du är mätt'); return; }
+  inv.berry--; stats.hunger = Math.min(100, stats.hunger + 9); toast('Mums! +9 hunger');
+}
+function craftAxe() {
+  if (inv.axe) { toast('Du har redan en stenyxa'); return; }
+  if (inv.wood < 3 || inv.stone < 2) { toast('Stenyxa kräver 3 trä och 2 sten'); return; }
+  inv.wood -= 3; inv.stone -= 2; inv.axe = true; toast('🪓 Du tillverkade en stenyxa! Dubbel insamling.');
+}
+function placeFire() {
+  if (inv.wood < 5 || inv.stone < 3) { toast('Lägereld kräver 5 trä och 3 sten'); return; }
+  const dir = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
+  const x = player.pos.x + dir.x * 2.6, z = player.pos.z + dir.z * 2.6;
+  inv.wood -= 5; inv.stone -= 3; buildFire(x, z); toast('🔥 Lägereld byggd!');
+}
+
+// ---------- Loop ----------
+const clock = new THREE.Clock();
+let lastPrompt = '';
+const tmp = new THREE.Vector3();
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const sky = updateSky();
+
+  if (running && !dead) {
+    // tid
+    const prev = timeOfDay;
+    timeOfDay = (timeOfDay + dt / DAY_LEN) % 1;
+    if (timeOfDay < prev) dayCount++;
+    if (prev < 0.75 && timeOfDay >= 0.75) toast('🌅 Solen går ner – se till att ha en eld!');
+    if (prev < 0.25 && timeOfDay >= 0.25) toast(`☀️ Gryning – du överlevde natten! (Dag ${dayCount})`);
+
+    // rörelse
+    const sprint = keys.ShiftLeft || keys.ShiftRight;
+    const speed = sprint ? 8.5 : 5;
+    const fw = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
+    const st = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
+    const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
+    tmp.set(-sy * fw + cy * st, 0, -cy * fw - sy * st);
+    if (tmp.lengthSq() > 0) tmp.normalize().multiplyScalar(speed * dt);
+    let nx = player.pos.x + tmp.x, nz = player.pos.z + tmp.z;
+    for (const r of resources) {          // enkel kollision mot stammar och stenar
+      if (r.gone || r.type === 'bush') continue;
+      const dx = nx - r.obj.position.x, dz = nz - r.obj.position.z, d = Math.hypot(dx, dz), min = r.radius + 0.4;
+      if (d < min && d > 0.0001) { nx = r.obj.position.x + dx / d * min; nz = r.obj.position.z + dz / d * min; }
+    }
+    const lim = WORLD / 2 - 8;
+    player.pos.x = THREE.MathUtils.clamp(nx, -lim, lim);
+    player.pos.z = THREE.MathUtils.clamp(nz, -lim, lim);
+    player.vel.y -= 18 * dt;
+    player.pos.y += player.vel.y * dt;
+    const gy = Math.max(groundY(player.pos.x, player.pos.z), -1.9);
+    if (player.pos.y <= gy) { player.pos.y = gy; player.vel.y = 0; player.onGround = true; }
+
+    // överlevnad
+    let nearFire = false;
+    for (const f of fires) if (f.fuel > 0 && Math.hypot(f.x - player.pos.x, f.z - player.pos.z) < 6) nearFire = true;
+    const inWater = groundY(player.pos.x, player.pos.z) < -1.6;
+    stats.hunger = Math.max(0, stats.hunger - (sprint ? 0.55 : 0.32) * dt);
+    if (nearFire) stats.warmth = Math.min(100, stats.warmth + 7 * dt);
+    else if (sky.night) stats.warmth = Math.max(0, stats.warmth - 1.1 * dt);
+    else stats.warmth += (75 - stats.warmth) * 0.05 * dt;
+    if (inWater) stats.warmth = Math.max(0, stats.warmth - 4 * dt);
+    if (stats.hunger <= 0 || stats.warmth <= 0) stats.hp = Math.max(0, stats.hp - 2.5 * dt);
+    else if (stats.hunger > 50 && stats.warmth > 50) stats.hp = Math.min(100, stats.hp + 0.6 * dt);
+    if (stats.hp <= 0) die();
+
+    const t = lookTarget();
+    let p = '';
+    if (t && t.fire) p = `🔥 Lägereld (${Math.ceil(t.fire.fuel)} s) – [E] lägg på trä`;
+    else if (t) p = `[Klick/E] ${t.res.label}`;
+    if (p !== lastPrompt) { $('prompt').textContent = p; lastPrompt = p; }
+  }
+
+  // animationer
+  for (const r of resources) {
+    if (r.shake > 0) { r.shake -= dt; r.obj.position.x = r.base.x + Math.sin(r.shake * 90) * 0.06; }
+    if (r.falling !== undefined) {
+      r.falling += dt; r.obj.rotation.z = Math.min(Math.PI / 2, r.falling * r.falling * 3);
+      if (r.falling > 1.6) { scene.remove(r.obj); r.falling = undefined; }
+    }
+    if (r.type === 'bush' && r.regrow > 0 && running) {
+      r.regrow -= dt;
+      if (r.regrow <= 0) {
+        r.hp = 3;
+        for (let i = 0; i < 9; i++) {
+          const be = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), matBerry);
+          const a = Math.random() * 6.28; be.position.set(Math.cos(a) * 0.68, 0.35 + Math.random() * 0.4, Math.sin(a) * 0.68);
+          r.berries.add(be);
+        }
+      }
+    }
+  }
+  const now = performance.now() / 1000;
+  for (const f of fires) {
+    if (running) f.fuel = Math.max(0, f.fuel - dt);
+    const on = f.fuel > 0, k = Math.min(1, f.fuel / 20);
+    f.flame.visible = f.flame2.visible = on;
+    const flick = 0.85 + Math.sin(now * 13 + f.x) * 0.08 + Math.sin(now * 23) * 0.06;
+    f.flame.scale.set(k, k * flick, k); f.flame2.scale.set(k, k * (2 - flick), k);
+    f.light.intensity = on ? 2.6 * flick * k : 0;
+  }
+
+  // kamera (lite gungning när man går)
+  const moving = running && (keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD) && player.onGround;
+  const bob = moving ? Math.sin(now * 10) * 0.05 : 0;
+  camera.position.set(player.pos.x, player.pos.y + 1.7 + bob, player.pos.z);
+  camera.rotation.set(player.pitch, player.yaw, 0);
+  updateUI(sky.night);
+  renderer.render(scene, camera);
+}
+function die() {
+  dead = true; running = false;
+  if (document.exitPointerLock) document.exitPointerLock();
+  overlay.style.display = 'flex';
+  overlay.querySelector('h1').textContent = 'DU DOG';
+  overlay.querySelector('.sub').textContent = `Du överlevde till dag ${dayCount}. Kyla och hunger är farligare än man tror.`;
+  overlay.querySelector('.keys').style.display = 'none';
+  $('gotext').textContent = 'Klicka för att försöka igen';
+}
+// testkrok för automatiska tester
+window.__game = { player, stats, inv, resources, fires, setTime: t => { timeOfDay = t; }, start };
+loop();
+})();
+</script>
+</body>
+</html>
