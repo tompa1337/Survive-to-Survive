@@ -10,6 +10,7 @@
 |------|-----|
 | [`docs/designdokument.md`](docs/designdokument.md) | Designdokument: kärnloop, tidsåldrar, roller, resurser, färdplan |
 | [`prototype/`](prototype/) | Spelbar prototyp 0.2 i webbläsaren (three.js), grottmålningsvärld |
+| [`prototype/djur.html`](prototype/djur.html) | Förhandsvisning av djuren (varg, björn, vildsvin) – modellerna finns i `animals.js` |
 | [`art/`](art/) | Konceptbilder. `grottmalning_roller.svg` (spelets stil) genereras av `make_grottmalning.py` |
 
 ## Spela prototypen

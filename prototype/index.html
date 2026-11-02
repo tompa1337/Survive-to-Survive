@@ -20,6 +20,7 @@
   .slot { background: rgba(35,24,18,.7); border: 2px solid #9a321e; border-radius: 10px 4px 12px 5px; padding: 6px 12px; min-width: 78px; text-align: center; font-size: 13px; }
   .slot b { display: block; font-size: 20px; }
   #cross { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #9a321e; border: 2px solid #f3e8cf; }
+  #flash { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(243,232,207,.2), rgba(201,138,31,.9)); opacity: 0; }
   #paint { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(70,35,12,.55) 100%); }
   #prompt { position: absolute; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); font-size: 15px; text-shadow: 0 1px 3px #000; white-space: nowrap; }
   #toasts { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); text-align: center; }
@@ -40,6 +41,7 @@
 </head>
 <body>
 <div id="paint"></div>
+<div id="flash"></div>
 <div id="vignette"></div>
 <div id="hud">
   <div id="stats">
@@ -126,19 +128,36 @@ const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
 // ---------- Terräng ----------
 const WORLD = 360;
-function height(x, z) {
-  return Math.sin(x * 0.045) * 2.4 + Math.cos(z * 0.038) * 2.2
-       + Math.sin((x + z) * 0.11) * 0.7 + Math.cos((x - z) * 0.021) * 3.5;
-}
+// Kullar: utspridda "puckelkullar" + böljande grund + berg runt kanten
 const lake = { x: 40, z: -50, r: 22 };
+const HILLS = [];
+{
+  let s2 = 4242; const r2 = () => ((s2 = (s2 * 16807) % 2147483647) - 1) / 2147483646;
+  while (HILLS.length < 26) {
+    const k = { x: (r2() - 0.5) * 300, z: (r2() - 0.5) * 300, h: 5 + r2() * 12, s: 11 + r2() * 18 };
+    if (Math.hypot(k.x, k.z) < 30 || Math.hypot(k.x - lake.x, k.z - lake.z) < lake.r + 30) continue;
+    HILLS.push(k);
+  }
+}
+const smooth = t => t * t * (3 - 2 * t);
+function height(x, z) {
+  let h = Math.sin(x * 0.031) * Math.cos(z * 0.027) * 5
+        + Math.sin(x * 0.072 + 1) * Math.sin(z * 0.064) * 2.4
+        + Math.sin((x + z) * 0.15) * 0.8 + Math.cos((x - z) * 0.021) * 3;
+  for (const k of HILLS) { const d2 = (x - k.x) ** 2 + (z - k.z) ** 2; h += k.h * Math.exp(-d2 / (2 * k.s * k.s)); }
+  const e = Math.max(Math.abs(x), Math.abs(z)) / (WORLD / 2);
+  if (e > 0.78) h += ((e - 0.78) / 0.22) ** 2 * 30;           // berg runt världens kant
+  const calm = Math.min(1, Math.max(0, (Math.hypot(x, z) - 8) / 30));
+  return h * (0.35 + 0.65 * calm);                               // lite lugnare vid start
+}
 function groundY(x, z) {
   let h = height(x, z);
   const d = Math.hypot(x - lake.x, z - lake.z);
-  if (d < lake.r + 10) h -= Math.max(0, 1 - d / (lake.r + 10)) * 6;
+  if (d < lake.r + 14) h += (-4.5 - h) * smooth(Math.min(1, 1 - (d - lake.r) / 14));
   return h;
 }
 {
-  const geo = new THREE.PlaneGeometry(WORLD, WORLD, 140, 140);
+  const geo = new THREE.PlaneGeometry(WORLD, WORLD, 180, 180);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
   const colors = [];
@@ -148,7 +167,8 @@ function groundY(x, z) {
     const y = groundY(x, z);
     pos.setY(i, y);
     if (y < -1.2) c.setHex(0xe2c89a);              // strand
-    else if (y > 5) c.setHex(0xb08a62);            // höjd
+    else if (y > 13) c.setHex(0xcdb795);           // bergstopp
+    else if (y > 6) c.setHex(0xb08a62);            // kulle
     else c.setHSL(0.075 + rand() * 0.02, 0.42, 0.56 + rand() * 0.06);
     colors.push(c.r, c.g, c.b);
   }
@@ -508,6 +528,33 @@ function placeFire() {
   inv.wood -= 5; inv.stone -= 3; buildFire(x, z); toast('Lägereld byggd!');
 }
 
+// ---------- Kraftfält vid världens kant ----------
+const fieldTex = canvasTex(256, 256, (g, w, h) => {
+  g.clearRect(0, 0, w, h);
+  const sp = (cx, cy, R, col) => { g.strokeStyle = col; g.lineWidth = 5; g.beginPath(); for (let i = 0; i < 70; i++) { const a = i / 10, r = R * i / 70; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.stroke(); };
+  sp(70, 70, 46, '#c98a1f'); sp(190, 180, 40, '#9a321e');
+  g.fillStyle = '#f3e8cf'; for (let i = 0; i < 8; i++) { g.beginPath(); g.arc(20 + i * 32, 240, 5, 0, 7); g.fill(); g.beginPath(); g.arc(36 + i * 32, 125, 4, 0, 7); g.fill(); }
+});
+fieldTex.wrapS = fieldTex.wrapT = THREE.RepeatWrapping; fieldTex.repeat.set(40, 8);
+const fieldMat = new THREE.MeshBasicMaterial({ map: fieldTex, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false, color: 0xffd9a0 });
+const FIELD = WORLD / 2 - 7.4;
+for (let i = 0; i < 4; i++) {
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(WORLD - 14, 90), fieldMat);
+  const a = i * Math.PI / 2;
+  wall.position.set(Math.sin(a) * FIELD, 25, Math.cos(a) * FIELD); wall.rotation.y = a;
+  scene.add(wall);
+}
+player.flying = false; player.flyT = 0;
+function launchToCenter() {
+  const tx = (Math.random() - 0.5) * 16, tz = (Math.random() - 0.5) * 16, ty = groundY(tx, tz);
+  const T = 3.4, G = 18;
+  player.vel.set((tx - player.pos.x) / T, (ty - player.pos.y) / T + 0.5 * G * T, (tz - player.pos.z) / T);
+  player.flying = true; player.flyT = 0; player.onGround = false;
+  toast('Kraftfältet slungar dig tillbaka mot mitten!');
+  const f = document.getElementById('flash'); f.style.transition = 'none'; f.style.opacity = 0.75;
+  requestAnimationFrame(() => { f.style.transition = 'opacity .9s'; f.style.opacity = 0; });
+}
+
 // ---------- Loop ----------
 const clock = new THREE.Clock();
 let lastPrompt = '';
@@ -533,19 +580,32 @@ function loop() {
     const sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
     tmp.set(-sy * fw + cy * st, 0, -cy * fw - sy * st);
     if (tmp.lengthSq() > 0) tmp.normalize().multiplyScalar(speed * dt);
-    let nx = player.pos.x + tmp.x, nz = player.pos.z + tmp.z;
-    for (const r of resources) {          // enkel kollision mot stammar och stenar
-      if (r.gone || r.type === 'bush') continue;
-      const dx = nx - r.obj.position.x, dz = nz - r.obj.position.z, d = Math.hypot(dx, dz), min = r.radius + 0.4;
-      if (d < min && d > 0.0001) { nx = r.obj.position.x + dx / d * min; nz = r.obj.position.z + dz / d * min; }
-    }
+    let nx, nz;
     const lim = WORLD / 2 - 8;
-    player.pos.x = THREE.MathUtils.clamp(nx, -lim, lim);
-    player.pos.z = THREE.MathUtils.clamp(nz, -lim, lim);
+    if (player.flying) {                   // slungad av kraftfältet: ingen styrning, ingen kollision
+      player.flyT += dt;
+      nx = player.pos.x + player.vel.x * dt; nz = player.pos.z + player.vel.z * dt;
+    } else {
+      nx = player.pos.x + tmp.x; nz = player.pos.z + tmp.z;
+      for (const r of resources) {          // enkel kollision mot stammar och stenar
+        if (r.gone || r.type === 'bush') continue;
+        const dx = nx - r.obj.position.x, dz = nz - r.obj.position.z, d = Math.hypot(dx, dz), min = r.radius + 0.4;
+        if (d < min && d > 0.0001) { nx = r.obj.position.x + dx / d * min; nz = r.obj.position.z + dz / d * min; }
+      }
+      if (Math.abs(nx) > lim || Math.abs(nz) > lim) {
+        nx = THREE.MathUtils.clamp(nx, -lim, lim); nz = THREE.MathUtils.clamp(nz, -lim, lim);
+        player.pos.x = nx; player.pos.z = nz;
+        launchToCenter();
+      }
+    }
+    player.pos.x = nx; player.pos.z = nz;
     player.vel.y -= 18 * dt;
     player.pos.y += player.vel.y * dt;
     const gy = Math.max(groundY(player.pos.x, player.pos.z), -1.9);
-    if (player.pos.y <= gy) { player.pos.y = gy; player.vel.y = 0; player.onGround = true; }
+    if (player.pos.y <= gy) {
+      player.pos.y = gy; player.vel.y = 0; player.onGround = true;
+      if (player.flying && player.flyT > 0.3) { player.flying = false; player.vel.x = player.vel.z = 0; toast('Duns! Du landade mitt i världen.'); }
+    }
 
     // överlevnad
     let nearFire = false;
@@ -598,10 +658,13 @@ function loop() {
   }
 
   // kamera (lite gungning när man går)
-  const moving = running && (keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD) && player.onGround;
+  const moving = running && !player.flying && (keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD) && player.onGround;
   const bob = moving ? Math.sin(now * 10) * 0.05 : 0;
   camera.position.set(player.pos.x, player.pos.y + 1.7 + bob, player.pos.z);
-  camera.rotation.set(player.pitch, player.yaw, 0);
+  camera.rotation.set(player.pitch, player.yaw, player.flying ? Math.sin(player.flyT * 2.2) * 0.35 : 0);
+  fieldTex.offset.y = now * 0.05;
+  const edge = Math.max(Math.abs(player.pos.x), Math.abs(player.pos.z));
+  fieldMat.opacity = 0.18 + 0.55 * THREE.MathUtils.clamp((edge - (FIELD - 30)) / 30, 0, 1) + Math.sin(now * 3) * 0.04;
   updateUI(sky.night);
   renderer.render(scene, camera);
 }
@@ -615,7 +678,7 @@ function die() {
   $('gotext').textContent = 'Klicka för att försöka igen';
 }
 // testkrok för automatiska tester
-window.__game = { player, stats, inv, resources, fires, setTime: t => { timeOfDay = t; }, start };
+window.__game = { launchToCenter, player, stats, inv, resources, fires, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
 loop();
 })();
 </script>

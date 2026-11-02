@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survive to Survive – Djuren</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #c99d72; font-family: Georgia, "Times New Roman", serif; color: #231812; }
+  canvas { display: block; }
+  #title { position: fixed; top: 18px; width: 100%; text-align: center; pointer-events: none; }
+  #title h1 { margin: 0; font-size: 34px; letter-spacing: 3px; }
+  #title div { font-size: 16px; color: #4a3424; }
+  #cards { position: fixed; bottom: 18px; left: 0; right: 0; display: flex; justify-content: space-around; pointer-events: none; }
+  .card { width: 28%; background: rgba(35,24,18,.82); color: #f3e8cf; border: 3px solid var(--c); border-radius: 18px 6px 20px 8px; padding: 10px 14px; }
+  .card h2 { margin: 0 0 4px; font-size: 24px; color: var(--c2); }
+  .card p { margin: 2px 0; font-size: 14px; line-height: 1.35; }
+  .card b { color: var(--c2); }
+  #hint { position: fixed; top: 80px; width: 100%; text-align: center; font-size: 13px; color: #4a3424; }
+</style>
+</head>
+<body>
+<div id="title"><h1>DJUREN</h1><div>Varg · Björn · Vildsvin – i grottmålningsstil</div></div>
+<div id="hint">Dra med musen för att snurra</div>
+<div id="cards">
+  <div class="card" style="--c:#6e665e;--c2:#d8d0c6"><h2>Vargen</h2>
+    <p><b>Kommer i flock</b> (3–5) och jagar mest på natten.</p>
+    <p>Snabb, cirklar runt och anfaller från sidan. Rädd för eld.</p>
+    <p><b>Ger:</b> skinn, ben, lite kött</p></div>
+  <div class="card" style="--c:#6b3f22;--c2:#e0a23a"><h2>Björnen</h2>
+    <p><b>Ensam och mycket stark</b>, försvarar sitt revir vid grottor.</p>
+    <p>Långsam men tål mycket. Kräver flera jägare.</p>
+    <p><b>Ger:</b> stort skinn (värme), mycket kött, klor</p></div>
+  <div class="card" style="--c:#9a321e;--c2:#e07a4a"><h2>Vildsvinet</h2>
+    <p><b>Fridfullt tills man skadar det</b>, sedan rusar det rakt mot en.</p>
+    <p>Gå åt sidan när det laddar!</p>
+    <p><b>Ger:</b> mycket kött, betar (verktyg)</p></div>
+</div>
+<script src="lib/three.min.js"></script>
+<script src="animals.js"></script>
+<script>
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xe6cfa3);
+scene.fog = new THREE.Fog(0xe6cfa3, 14, 40);
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xfff0d8, 0x6b4a2a, 0.75));
+const sun = new THREE.DirectionalLight(0xfff1d6, 1.2); sun.position.set(4, 9, 6); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10 });
+scene.add(sun);
+
+// stenmark
+const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+g.fillStyle = '#d6b38a'; g.fillRect(0, 0, 512, 512);
+for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(${120 + Math.random() * 60},${80 + Math.random() * 40},${50 + Math.random() * 30},${0.05 + Math.random() * 0.12})`; g.beginPath(); g.ellipse(Math.random() * 512, Math.random() * 512, 10 + Math.random() * 60, 5 + Math.random() * 25, Math.random() * 3, 0, 7); g.fill(); }
+const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(6, 6); tex.colorSpace = THREE.SRGBColorSpace;
+const ground = new THREE.Mesh(new THREE.CircleGeometry(30, 48), new THREE.MeshLambertMaterial({ map: tex }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+const wolf = Animals.makeWolf(); wolf.position.set(-3.5, 0, 0.9); wolf.rotation.y = -0.9;
+const wolf2 = Animals.makeWolf(); wolf2.position.set(-3.9, 0, -1.8); wolf2.rotation.y = -0.15; wolf2.scale.setScalar(0.92);
+const bear = Animals.makeBear(); bear.position.set(-0.3, 0, -0.9); bear.rotation.y = -0.5;
+const boar = Animals.makeBoar(); boar.position.set(3.1, 0, 0.9); boar.rotation.y = -1.25;
+const all = [wolf, wolf2, bear, boar];
+all.forEach(a => { a.traverse(m => { if (m.isMesh) m.castShadow = true; }); scene.add(a); });
+
+let yaw = 0, drag = false, lx = 0;
+addEventListener('pointerdown', e => { drag = true; lx = e.clientX; });
+addEventListener('pointerup', () => drag = false);
+addEventListener('pointermove', e => { if (drag) { yaw += (e.clientX - lx) * 0.006; lx = e.clientX; } });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+const clock = new THREE.Clock();
+(function loop() {
+  requestAnimationFrame(loop);
+  const t = clock.getElapsedTime();
+  const r = 8.2;
+  camera.position.set(Math.sin(yaw) * r, 2.6, Math.cos(yaw) * r);
+  camera.lookAt(0, 0.55, 0);
+  // liten "andning"/svansvift så de känns levande
+  all.forEach((a, i) => { a.position.y = Math.sin(t * 2 + i) * 0.015; });
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>
