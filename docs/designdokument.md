@@ -101,7 +101,16 @@ Rollerna är **mjuka**: alla kan göra allt, men varje roll har ett eget verktyg
 
 ## 10. Grafisk stil
 
-**Stiliserad lågpoly** med varma färger: ockra, bränd orange, mossgrönt och isblått. Tydliga silhuetter så att man ser direkt vem som är vilken roll, även på avstånd. Se `art/karaktarer.svg`.
+Spelet använder **två stilar som hör ihop**:
+
+| Stil | Används till | Referens |
+|------|--------------|----------|
+| **Stiliserad lågpoly**: varma färger (ockra, bränd orange, mossgrönt, isblått) och tydliga silhuetter | Karaktärer, djur och världen i själva spelet (3D) | `art/karaktarer.svg` |
+| **Grottmålning**: platta figurer i ockra och kol på stenvägg, handavtryck | Huvudmeny, rollval, karta, laddningsskärmar, tidsålderslyft, ikoner | `art/grottmalning_roller.svg` |
+
+Idén är att stammen "målar sin historia" på grottväggen. När man går upp en tidsålder kan en ny målning dyka upp på väggen i byns grotta.
+
+Övriga stilar som testades finns i `art/alternativ_a–d.svg`.
 
 ## 11. Färdplan
 
