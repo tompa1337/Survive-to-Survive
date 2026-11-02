@@ -6,53 +6,56 @@
 <title>Survive to Survive – Prototyp 0.1</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: "Trebuchet MS", system-ui, sans-serif; color: #f4e9d8; user-select: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: Georgia, "Times New Roman", serif; color: #f3e8cf; user-select: none; }
   canvas { display: block; }
   #hud { position: fixed; inset: 0; pointer-events: none; }
   #stats { position: absolute; top: 16px; left: 16px; width: 220px; }
   .bar { margin-bottom: 8px; }
   .bar label { font-size: 13px; letter-spacing: .5px; text-shadow: 0 1px 2px #000; display: flex; justify-content: space-between; }
-  .bar .track { height: 10px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.25); border-radius: 6px; overflow: hidden; }
+  .bar .track { height: 12px; background: rgba(35,24,18,.55); border: 2px solid #231812; border-radius: 8px 3px 9px 4px; overflow: hidden; }
   .bar .fill { height: 100%; transition: width .2s; }
   #clock { position: absolute; top: 16px; right: 16px; text-align: right; text-shadow: 0 1px 3px #000; font-size: 15px; }
   #clock b { font-size: 20px; display: block; }
   #inv { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
-  .slot { background: rgba(30,20,10,.65); border: 1px solid rgba(255,220,170,.35); border-radius: 8px; padding: 6px 12px; min-width: 74px; text-align: center; font-size: 13px; }
+  .slot { background: rgba(35,24,18,.7); border: 2px solid #9a321e; border-radius: 10px 4px 12px 5px; padding: 6px 12px; min-width: 78px; text-align: center; font-size: 13px; }
   .slot b { display: block; font-size: 20px; }
-  #cross { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 0 3px #000; }
+  #cross { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #9a321e; border: 2px solid #f3e8cf; }
+  #paint { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(70,35,12,.55) 100%); }
   #prompt { position: absolute; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); font-size: 15px; text-shadow: 0 1px 3px #000; white-space: nowrap; }
   #toasts { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); text-align: center; }
   .toast { font-size: 15px; text-shadow: 0 1px 3px #000; animation: fade 2.6s forwards; }
   @keyframes fade { 0%,70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
   #help { position: absolute; bottom: 18px; right: 16px; font-size: 12px; line-height: 1.6; text-align: right; opacity: .8; text-shadow: 0 1px 2px #000; }
   #help kbd { background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.3); border-radius: 4px; padding: 0 5px; font-family: inherit; }
-  #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(40,22,8,.82), rgba(0,0,0,.94)); cursor: pointer; }
-  #overlay .box { max-width: 560px; text-align: center; padding: 24px; }
-  #overlay h1 { font-size: 46px; margin: 0 0 4px; letter-spacing: 2px; color: #ffb35c; text-shadow: 0 0 22px rgba(255,120,30,.5); }
-  #overlay .sub { opacity: .75; margin-bottom: 22px; }
-  #overlay .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; text-align: left; margin: 0 auto 24px; width: fit-content; font-size: 15px; }
+  #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #c99d72 url(roller.svg) center top / 100% auto no-repeat; cursor: pointer; align-items: flex-end; padding-bottom: 3vh; }
+  #overlay::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(201,157,114,.15) 30%, rgba(60,30,10,.7)); }
+  #overlay .box { position: relative; max-width: 860px; text-align: center; padding: 14px 26px 18px; background: rgba(35,24,18,.82); border: 3px solid #9a321e; border-radius: 22px 8px 26px 10px; }
+  #overlay h1 { font-size: 30px; margin: 0 0 2px; letter-spacing: 3px; color: #e0a23a; }
+  #overlay .sub { opacity: .75; margin-bottom: 12px; }
+  #overlay .keys { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 5px 12px; text-align: left; margin: 0 auto 14px; width: fit-content; font-size: 14px; }
   #overlay kbd { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); border-radius: 4px; padding: 1px 7px; font-family: inherit; }
-  #overlay .go { display: inline-block; background: #d9682b; color: #fff; padding: 12px 28px; border-radius: 30px; font-size: 18px; font-weight: bold; }
+  #overlay .go { display: inline-block; background: #9a321e; color: #f3e8cf; padding: 12px 28px; border-radius: 26px 10px 28px 12px; font-size: 18px; font-weight: bold; border: 2px solid #f3e8cf; }
   #vignette { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 160px rgba(120,0,0,0); transition: box-shadow .4s; }
 </style>
 </head>
 <body>
+<div id="paint"></div>
 <div id="vignette"></div>
 <div id="hud">
   <div id="stats">
-    <div class="bar"><label><span>❤ Hälsa</span><span id="hpv"></span></label><div class="track"><div class="fill" id="hp" style="background:#d9473a"></div></div></div>
-    <div class="bar"><label><span>🍖 Hunger</span><span id="huv"></span></label><div class="track"><div class="fill" id="hu" style="background:#d9a03a"></div></div></div>
-    <div class="bar"><label><span>🔥 Värme</span><span id="wav"></span></label><div class="track"><div class="fill" id="wa" style="background:#e8743a"></div></div></div>
+    <div class="bar"><label><span>Hälsa</span><span id="hpv"></span></label><div class="track"><div class="fill" id="hp" style="background:#9a321e"></div></div></div>
+    <div class="bar"><label><span>Hunger</span><span id="huv"></span></label><div class="track"><div class="fill" id="hu" style="background:#c98a1f"></div></div></div>
+    <div class="bar"><label><span>Värme</span><span id="wav"></span></label><div class="track"><div class="fill" id="wa" style="background:#e0a23a"></div></div></div>
   </div>
   <div id="clock"><b id="day">Dag 1</b><span id="tod"></span></div>
   <div id="cross"></div>
   <div id="prompt"></div>
   <div id="toasts"></div>
   <div id="inv">
-    <div class="slot">🪵 Trä<b id="iwood">0</b></div>
-    <div class="slot">🪨 Sten<b id="istone">0</b></div>
-    <div class="slot">🫐 Bär<b id="iberry">0</b></div>
-    <div class="slot" id="axeslot" style="opacity:.4">🪓 Stenyxa<b id="iaxe">–</b></div>
+    <div class="slot">Trä<b id="iwood">0</b></div>
+    <div class="slot">Sten<b id="istone">0</b></div>
+    <div class="slot">Bär<b id="iberry">0</b></div>
+    <div class="slot" id="axeslot" style="opacity:.4">Stenyxa<b id="iaxe">–</b></div>
   </div>
   <div id="help">
     <kbd>Klick</kbd>/<kbd>E</kbd> samla · <kbd>Q</kbd> ät bär<br>
@@ -64,7 +67,7 @@
 <div id="overlay">
   <div class="box">
     <h1>SURVIVE TO SURVIVE</h1>
-    <div class="sub">Prototyp 0.1 · Stenåldern · Överlev nätterna</div>
+    <div class="sub">Prototyp 0.2 · Grottmålningsvärlden · Överlev nätterna</div>
     <div class="keys">
       <kbd>WASD</kbd><span>Gå</span>
       <kbd>Mus</kbd><span>Titta runt</span>
@@ -92,7 +95,23 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x9ec9e8, 40, 170);
+scene.fog = new THREE.Fog(0xe6cfa3, 35, 160);
+
+// Grottmålningspalett: röd ockra, gul ockra, kol, krita, umbra
+const PAL = { red: 0x9a321e, yel: 0xc98a1f, blk: 0x231812, wht: 0xf3e8cf, brn: 0x6b3f22 };
+const gradTex = new THREE.DataTexture(new Uint8Array([110, 185, 255]), 3, 1, THREE.RedFormat);
+gradTex.minFilter = gradTex.magFilter = THREE.NearestFilter; gradTex.needsUpdate = true;
+const toon = (c, extra = {}) => new THREE.MeshToonMaterial(Object.assign({ color: c, gradientMap: gradTex }, extra));
+const outlineMat = new THREE.MeshBasicMaterial({ color: PAL.blk, side: THREE.BackSide });
+function outline(obj, k = 1.08) {           // svart penselkontur (inverterat skal)
+  const meshes = []; obj.traverse(m => { if (m.isMesh && !m.userData.isOutline) meshes.push(m); });
+  for (const m of meshes) { const o = new THREE.Mesh(m.geometry, outlineMat); o.userData.isOutline = true; o.scale.setScalar(k); m.add(o); }
+  return obj;
+}
+function canvasTex(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
 const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 600);
 camera.rotation.order = 'YXZ';
 
@@ -128,26 +147,37 @@ function groundY(x, z) {
     const x = pos.getX(i), z = pos.getZ(i);
     const y = groundY(x, z);
     pos.setY(i, y);
-    if (y < -1.2) c.setHex(0xc9b27a);              // strand
-    else if (y > 5) c.setHex(0x8a8f6a);            // höjd
-    else c.setHSL(0.24 + rand() * 0.04, 0.42, 0.30 + rand() * 0.06);
+    if (y < -1.2) c.setHex(0xe2c89a);              // strand
+    else if (y > 5) c.setHex(0xb08a62);            // höjd
+    else c.setHSL(0.075 + rand() * 0.02, 0.42, 0.56 + rand() * 0.06);
     colors.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  const ground = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+  // stenväggsstruktur: fläckar och sprickor som på en grottvägg
+  const rock = canvasTex(512, 512, (g, w, h) => {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 260; i++) {
+      g.fillStyle = `rgba(${120 + rand() * 60},${80 + rand() * 40},${50 + rand() * 30},${0.05 + rand() * 0.12})`;
+      g.beginPath(); g.ellipse(rand() * w, rand() * h, 10 + rand() * 60, 5 + rand() * 25, rand() * 3, 0, 7); g.fill();
+    }
+    g.strokeStyle = 'rgba(90,60,40,.25)'; g.lineWidth = 1.5;
+    for (let i = 0; i < 30; i++) { g.beginPath(); const x = rand() * w, y = rand() * h; g.moveTo(x, y); g.quadraticCurveTo(x + rand() * 60 - 30, y + 40, x + rand() * 40 - 20, y + 90); g.stroke(); }
+  });
+  rock.wrapS = rock.wrapT = THREE.RepeatWrapping; rock.repeat.set(24, 24);
+  const ground = new THREE.Mesh(geo, toon(0xffffff, { vertexColors: true, map: rock }));
   ground.receiveShadow = true;
   scene.add(ground);
 
   const water = new THREE.Mesh(new THREE.CircleGeometry(lake.r + 6, 40),
-    new THREE.MeshLambertMaterial({ color: 0x3f7fa6, transparent: true, opacity: 0.82 }));
+    toon(0x4d5a55, { transparent: true, opacity: 0.85 }));
   water.rotation.x = -Math.PI / 2;
   water.position.set(lake.x, -1.6, lake.z);
   scene.add(water);
 }
 
 // ---------- Ljus, himmel, dag/natt ----------
-const hemi = new THREE.HemisphereLight(0xcfe8ff, 0x4a3a20, 0.7);
+const hemi = new THREE.HemisphereLight(0xfff0d8, 0x6b4a2a, 0.7);
 scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff1d6, 1.2);
 sun.castShadow = true;
@@ -163,16 +193,16 @@ const stars = (() => {
     p.push(Math.cos(t) * Math.sqrt(1 - u * u) * r, u * r, Math.sin(t) * Math.sqrt(1 - u * u) * r);
   }
   g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
-  const m = new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0, fog: false });
+  const m = new THREE.PointsMaterial({ color: 0xe8c890, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, fog: false });
   const s = new THREE.Points(g, m); scene.add(s); return s;
 })();
-const moon = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16), new THREE.MeshBasicMaterial({ color: 0xeef2ff, fog: false }));
+const moon = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16), new THREE.MeshBasicMaterial({ color: PAL.wht, fog: false }));
 scene.add(moon);
 
 const DAY_LEN = 240;            // sekunder per dygn
 let timeOfDay = 0.30;           // 0 = midnatt, 0.25 soluppgång, 0.5 mitt på dagen, 0.75 solnedgång
 let dayCount = 1;
-const skyDay = new THREE.Color(0x9ec9e8), skyDusk = new THREE.Color(0xe88a4a), skyNight = new THREE.Color(0x0a1022);
+const skyDay = new THREE.Color(0xe6cfa3), skyDusk = new THREE.Color(0xc4703a), skyNight = new THREE.Color(0x1d140f);
 const skyCol = new THREE.Color();
 
 function updateSky() {
@@ -196,11 +226,11 @@ function updateSky() {
 
 // ---------- Resurser ----------
 const resources = [];
-const matTrunk = new THREE.MeshLambertMaterial({ color: 0x6b4426, flatShading: true });
-const matLeaf  = [0x2f5d2a, 0x386b2c, 0x2a5233].map(c => new THREE.MeshLambertMaterial({ color: c, flatShading: true }));
-const matRock  = new THREE.MeshLambertMaterial({ color: 0x8c8a83, flatShading: true });
-const matBush  = new THREE.MeshLambertMaterial({ color: 0x3c6e2f, flatShading: true });
-const matBerry = new THREE.MeshLambertMaterial({ color: 0x5b2a8c, emissive: 0x1a0830 });
+const matTrunk = toon(PAL.brn);
+const matLeaf  = [0x3b2a1e, 0x5a4a2a, 0x7a3a22].map(c => toon(c));   // kol, umbra, mörk röd ockra
+const matRock  = toon(0xd8c3a0);
+const matBush  = toon(0x8a6a2a);
+const matBerry = new THREE.MeshBasicMaterial({ color: PAL.red });
 
 function farFromSpawn(x, z) { return Math.hypot(x, z) > 7 && Math.hypot(x - lake.x, z - lake.z) > lake.r + 4; }
 
@@ -216,6 +246,7 @@ function makeTree(x, z) {
   }
   g.position.set(x, groundY(x, z) - 0.1, z);
   g.rotation.y = rand() * 6;
+  outline(g, 1.1);
   return addRes(g, { type: 'tree', hp: 5, label: 'Träd', radius: 0.5 });
 }
 function makeRock(x, z) {
@@ -224,6 +255,7 @@ function makeRock(x, z) {
   m.scale.set(1.2, 0.8, 1); m.rotation.set(rand(), rand() * 6, rand());
   m.castShadow = true; m.receiveShadow = true;
   m.position.set(x, groundY(x, z) + s * 0.35, z);
+  outline(m, 1.08);
   return addRes(m, { type: 'rock', hp: 6, label: 'Stenblock', radius: s * 0.9 });
 }
 function makeBush(x, z) {
@@ -237,6 +269,7 @@ function makeBush(x, z) {
     be.position.set(Math.cos(t) * 0.68, 0.35 + u * 0.4, Math.sin(t) * 0.68);
     berries.add(be);
   }
+  outline(g, 1.1);
   g.add(berries);
   g.position.set(x, groundY(x, z), z);
   return addRes(g, { type: 'bush', hp: 3, label: 'Bärbuske', berries, regrow: 0, radius: 0.6 });
@@ -254,6 +287,70 @@ for (let i = 0; i < 380; i++) {
 // garanterade saker nära start
 makeTree(6, -5); makeTree(-6, -7); makeRock(3, -9); makeBush(-3, -6); makeBush(8, 2);
 
+// ---------- Målade stenar (stammens berättelser) ----------
+const PAINTINGS = {
+  hand(g, w, h) {
+    g.fillStyle = 'rgba(154,50,30,.9)';
+    const hand = (x, y, r) => { g.save(); g.translate(x, y); g.rotate(r); g.beginPath(); g.ellipse(0, 0, 34, 38, 0, 0, 7); g.fill();
+      [[-28, -52, -.3], [-11, -68, -.1], [7, -70, .07], [24, -60, .25], [40, -16, .9]].forEach(([fx, fy, fr]) => { g.beginPath(); g.ellipse(fx, fy, 9, 26, fr, 0, 7); g.fill(); }); g.restore(); };
+    hand(w * .35, h * .35, -.2); hand(w * .65, h * .62, .3); g.fillStyle = 'rgba(35,24,18,.8)'; hand(w * .4, h * .8, .1);
+  },
+  mammoth(g, w, h) {
+    g.strokeStyle = '#231812'; g.lineWidth = 9; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(60, 230); g.quadraticCurveTo(90, 110, 170, 120); g.quadraticCurveTo(220, 130, 210, 200); g.lineTo(210, 280);
+    g.moveTo(180, 210); g.lineTo(180, 280); g.moveTo(100, 220); g.lineTo(100, 280); g.moveTo(75, 220); g.lineTo(75, 280);
+    g.moveTo(60, 230); g.quadraticCurveTo(30, 270, 50, 310); g.stroke();
+    g.strokeStyle = '#f3e8cf'; g.lineWidth = 6; g.beginPath(); g.moveTo(66, 250); g.quadraticCurveTo(30, 290, 70, 300); g.stroke();
+    g.strokeStyle = '#9a321e'; g.lineWidth = 5; g.beginPath(); g.moveTo(140, 60); g.lineTo(120, 150); g.stroke();
+    g.fillStyle = '#9a321e'; g.beginPath(); g.moveTo(140, 50); g.lineTo(130, 75); g.lineTo(150, 72); g.fill();
+  },
+  spiral(g, w, h) {
+    const sp = (cx, cy, R, col) => { g.strokeStyle = col; g.lineWidth = 7; g.beginPath(); for (let i = 0; i < 90; i++) { const a = i / 12, r = R * i / 90; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.stroke(); };
+    sp(w * .5, h * .35, 70, '#9a321e'); sp(w * .3, h * .75, 40, '#231812'); sp(w * .72, h * .78, 34, '#231812');
+    g.fillStyle = '#f3e8cf'; for (let i = 0; i < 9; i++) { g.beginPath(); g.arc(30 + i * 25, h - 20, 6, 0, 7); g.fill(); }
+  },
+  hunters(g, w, h) {
+    g.strokeStyle = '#9a321e'; g.fillStyle = '#9a321e'; g.lineWidth = 8; g.lineCap = 'round';
+    [[70, 180], [170, 210]].forEach(([x, y]) => {
+      g.beginPath(); g.arc(x, y - 70, 14, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(x - 22, y - 55); g.lineTo(x + 16, y - 55); g.lineTo(x, y); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x - 30, y + 60); g.moveTo(x, y); g.lineTo(x + 30, y + 55);
+      g.moveTo(x + 10, y - 50); g.lineTo(x + 40, y - 90); g.stroke();
+      g.strokeStyle = '#231812'; g.lineWidth = 5; g.beginPath(); g.moveTo(x - 20, y - 20); g.lineTo(x + 70, y - 140); g.stroke();
+      g.strokeStyle = '#9a321e'; g.lineWidth = 8;
+    });
+  },
+  deer(g, w, h) {
+    g.strokeStyle = '#6b3f22'; g.lineWidth = 9; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(60, 200); g.lineTo(190, 200); g.moveTo(80, 200); g.lineTo(70, 290); g.moveTo(100, 200); g.lineTo(110, 290);
+    g.moveTo(170, 200); g.lineTo(160, 290); g.moveTo(185, 200); g.lineTo(200, 285); g.moveTo(190, 200); g.lineTo(215, 150); g.stroke();
+    g.lineWidth = 5; g.strokeStyle = '#231812'; g.beginPath(); g.moveTo(215, 150); g.lineTo(200, 90); g.moveTo(207, 120); g.lineTo(180, 100);
+    g.moveTo(215, 150); g.lineTo(240, 95); g.moveTo(232, 115); g.lineTo(250, 100); g.stroke();
+  },
+};
+const paintTex = {};
+for (const k in PAINTINGS) paintTex[k] = canvasTex(256, 384, (g, w, h) => PAINTINGS[k](g, w, h));
+const matMonolith = toon(0xe0ccaa);
+function makePaintedStone(x, z, kind, rot) {
+  const g = new THREE.Group();
+  const hgt = 3.4 + rand() * 1.4;
+  const stone = new THREE.Mesh(new THREE.BoxGeometry(2.1, hgt, 0.8), matMonolith);
+  stone.position.y = hgt / 2 - 0.3; stone.castShadow = true; g.add(stone);
+  outline(g, 1.06);
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.7), new THREE.MeshBasicMaterial({ map: paintTex[kind], transparent: true, alphaTest: 0.1 }));
+  art.position.set(0, hgt / 2 - 0.2, 0.42); g.add(art);
+  g.position.set(x, groundY(x, z), z); g.rotation.y = rot;
+  return addRes(g, { type: 'monolith', hp: 1, label: 'Målad sten', radius: 1.2 });
+}
+makePaintedStone(-2, -12, 'hand', 0.15);
+makePaintedStone(10, -9, 'mammoth', -0.6);
+makePaintedStone(-11, 3, 'hunters', 1.2);
+const kinds = Object.keys(PAINTINGS);
+for (let i = 0; i < 26; i++) {
+  const x = (rand() - 0.5) * (WORLD - 60), z = (rand() - 0.5) * (WORLD - 60);
+  if (farFromSpawn(x, z) && Math.hypot(x, z) > 20) makePaintedStone(x, z, kinds[i % kinds.length], rand() * 6.28);
+}
+
 // ---------- Spelare ----------
 const player = { pos: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(), yaw: Math.PI, pitch: 0, onGround: false };
 player.pos.y = groundY(0, 0);
@@ -264,10 +361,10 @@ let running = false, dead = false, gatherCd = 0;
 
 // ---------- Lägereldar ----------
 const fires = [];
-const matLog = new THREE.MeshLambertMaterial({ color: 0x4b2e17, flatShading: true });
-const matFlame = new THREE.MeshBasicMaterial({ color: 0xffa23a, transparent: true, opacity: 0.9 });
-const matFlame2 = new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.9 });
-const matStoneRing = new THREE.MeshLambertMaterial({ color: 0x77736a, flatShading: true });
+const matLog = toon(PAL.brn);
+const matFlame = new THREE.MeshBasicMaterial({ color: PAL.red });
+const matFlame2 = new THREE.MeshBasicMaterial({ color: 0xe0a23a });
+const matStoneRing = toon(0xb8a688);
 function buildFire(x, z) {
   const g = new THREE.Group();
   for (let i = 0; i < 8; i++) {
@@ -279,7 +376,8 @@ function buildFire(x, z) {
     log.rotation.z = Math.PI / 2.6; log.rotation.y = i * Math.PI / 2; log.position.y = 0.25; g.add(log);
   }
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.38, 1.1, 6), matFlame); flame.position.y = 0.65; g.add(flame);
-  const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 5), matFlame2); flame2.position.y = 0.55; g.add(flame2);
+  const flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.24, 1.5, 5), matFlame2); flame2.position.y = 0.75; g.add(flame2);
+  outline(g, 1.12);
   const light = new THREE.PointLight(0xff8a3a, 2.5, 22, 1.6); light.position.y = 1.2; g.add(light);
   g.position.set(x, groundY(x, z), z);
   scene.add(g);
@@ -301,7 +399,7 @@ function updateUI(night) {
   $('iaxe').textContent = inv.axe ? '✓' : '–'; $('axeslot').style.opacity = inv.axe ? 1 : 0.4;
   $('day').textContent = 'Dag ' + dayCount;
   const h = Math.floor(timeOfDay * 24), m = Math.floor((timeOfDay * 24 - h) * 60);
-  $('tod').textContent = (night ? '🌙 ' : '☀️ ') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  $('tod').textContent = (night ? 'Natt · ' : 'Dag · ') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
   const danger = Math.min(1, Math.max(0, (40 - stats.hp) / 40));
   $('vignette').style.boxShadow = `inset 0 0 160px rgba(140,0,0,${danger * 0.8})`;
 }
@@ -372,9 +470,10 @@ function interact() {
   gatherCd = nowMs + 380;
   if (t.fire) {
     if (inv.wood < 1) { toast('Du behöver trä för att mata elden'); return; }
-    inv.wood--; t.fire.fuel = Math.min(300, t.fire.fuel + 45); toast('🔥 Elden flammar upp (+45 s)'); return;
+    inv.wood--; t.fire.fuel = Math.min(300, t.fire.fuel + 45); toast('Elden flammar upp (+45 s)'); return;
   }
-  const r = t.res; const power = inv.axe ? 2 : 1;
+  const r = t.res; if (r.type === 'monolith') { toast('En målning från stammens förfäder'); return; }
+  const power = inv.axe ? 2 : 1;
   r.shake = 0.25;
   if (r.type === 'tree') {
     const got = power; inv.wood += got; r.hp -= power;
@@ -400,13 +499,13 @@ function eat() {
 function craftAxe() {
   if (inv.axe) { toast('Du har redan en stenyxa'); return; }
   if (inv.wood < 3 || inv.stone < 2) { toast('Stenyxa kräver 3 trä och 2 sten'); return; }
-  inv.wood -= 3; inv.stone -= 2; inv.axe = true; toast('🪓 Du tillverkade en stenyxa! Dubbel insamling.');
+  inv.wood -= 3; inv.stone -= 2; inv.axe = true; toast('Du tillverkade en stenyxa! Dubbel insamling.');
 }
 function placeFire() {
   if (inv.wood < 5 || inv.stone < 3) { toast('Lägereld kräver 5 trä och 3 sten'); return; }
   const dir = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
   const x = player.pos.x + dir.x * 2.6, z = player.pos.z + dir.z * 2.6;
-  inv.wood -= 5; inv.stone -= 3; buildFire(x, z); toast('🔥 Lägereld byggd!');
+  inv.wood -= 5; inv.stone -= 3; buildFire(x, z); toast('Lägereld byggd!');
 }
 
 // ---------- Loop ----------
@@ -423,8 +522,8 @@ function loop() {
     const prev = timeOfDay;
     timeOfDay = (timeOfDay + dt / DAY_LEN) % 1;
     if (timeOfDay < prev) dayCount++;
-    if (prev < 0.75 && timeOfDay >= 0.75) toast('🌅 Solen går ner – se till att ha en eld!');
-    if (prev < 0.25 && timeOfDay >= 0.25) toast(`☀️ Gryning – du överlevde natten! (Dag ${dayCount})`);
+    if (prev < 0.75 && timeOfDay >= 0.75) toast('Solen går ner – se till att ha en eld!');
+    if (prev < 0.25 && timeOfDay >= 0.25) toast(`Gryning – du överlevde natten! (Dag ${dayCount})`);
 
     // rörelse
     const sprint = keys.ShiftLeft || keys.ShiftRight;
@@ -463,7 +562,8 @@ function loop() {
 
     const t = lookTarget();
     let p = '';
-    if (t && t.fire) p = `🔥 Lägereld (${Math.ceil(t.fire.fuel)} s) – [E] lägg på trä`;
+    if (t && t.fire) p = `Lägereld (${Math.ceil(t.fire.fuel)} s) – [E] lägg på trä`;
+    else if (t && t.res.type === 'monolith') p = 'Målad sten';
     else if (t) p = `[Klick/E] ${t.res.label}`;
     if (p !== lastPrompt) { $('prompt').textContent = p; lastPrompt = p; }
   }

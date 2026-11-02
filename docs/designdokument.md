@@ -97,28 +97,53 @@ Rollerna är **mjuka**: alla kan göra allt, men varje roll har ett eget verktyg
 | Prototyp | Webbläsare (three.js), finns i `prototype/` för att snabbt testa känslan |
 | Riktigt spel | **Godot 4** (gratis, lätt att lära sig, inbyggt nätverk) eller **Unreal Engine 5** (snyggast, starkt multiplayer, tyngre) |
 | Multiplayer | Värd-klient (en spelare är värd), upp till 6 spelare. Senare dedikerad server |
-| 3D-modeller | Blender, lågpolystil (enkla former, starka färger) för att hålla nere arbetet |
+| 3D-modeller | Blender, enkla former + toon-shading och svarta konturer (grottmålningsstil) |
 
-## 10. Grafisk stil
+## 10. Grafisk stil: "Levande grottmålning"
 
-Spelet använder **två stilar som hör ihop**:
+**Hela spelet är målat som en grottvägg**: karaktärer, värld, menyer och ikoner. Det ger en stil som ingen annan har, och den är billigare att producera än realistisk 3D.
 
-| Stil | Används till | Referens |
-|------|--------------|----------|
-| **Stiliserad lågpoly**: varma färger (ockra, bränd orange, mossgrönt, isblått) och tydliga silhuetter | Karaktärer, djur och världen i själva spelet (3D) | `art/karaktarer.svg` |
-| **Grottmålning**: platta figurer i ockra och kol på stenvägg, handavtryck | Huvudmeny, rollval, karta, laddningsskärmar, tidsålderslyft, ikoner | `art/grottmalning_roller.svg` |
+**Palett** (bara naturpigment):
 
-Idén är att stammen "målar sin historia" på grottväggen. När man går upp en tidsålder kan en ny målning dyka upp på väggen i byns grotta.
+| Färg | Hex | Används till |
+|------|-----|--------------|
+| Röd ockra | `#9a321e` | Jägaren, Shamanen, eld, bär, viktiga saker |
+| Gul ockra | `#c98a1f` | Samlaren, solljus, mat |
+| Kol | `#231812` | Byggaren, konturer, natt |
+| Krita | `#f3e8cf` | Hantverkaren, ben, stjärnor |
+| Umbra | `#6b3f22` | Spejaren, trä |
+| Stenvägg | `#c99d72` | Mark, himmel på dagen, bakgrunder |
 
-Övriga stilar som testades finns i `art/alternativ_a–d.svg`.
+**Världen i 3D:**
+- Toon-shading med 3 tonsteg och **svarta penselkonturer** runt allt.
+- Mark och himmel i stenväggsfärger. Marken har en struktur med fläckar och sprickor, som en grottvägg.
+- Träd i kol, umbra och mörk röd ockra. Stenar i krita. Bärbuskar i gul ockra med röda bär.
+- **Målade stenar** står utspridda i världen med handavtryck, mammutar, jägare och spiraler. Det är stammens berättelser, och senare kan de bli ledtrådar eller uppdrag.
+- Natten är kolsvart med stjärnor i ockra. Elden är röd och gul.
+
+**Karaktärer:** varje roll skiljer sig åt på fyra sätt så att den känns igen direkt, även på avstånd: **färg, kroppsform, siluett och symbol**.
+
+| Roll | Färg | Kroppsform | Siluett | Symbol |
+|------|------|-----------|---------|--------|
+| Jägaren | Röd | Lång, smal, omvänd triangel | Vargöron, spjut | Spjutspets |
+| Samlaren | Gul | Liten, rund cirkel | Blomkrona, korg på ryggen | Tre bär |
+| Byggaren | Svart | Kort, bred rektangel | Stock över huvudet | Stock |
+| Hantverkaren | Vit med svart kontur | Romb, på knä | Spretig hårknut, flinta | Flintspets |
+| Spejaren | Brun | Bara streck, längst | Tre fjädrar, slunga | Fotspår |
+| Shamanen | Röd med vita prickar | Bred mantel, triangel uppåt | Jättestora hjorthorn | Spiral |
+
+Referens: `art/grottmalning_roller.svg`. Äldre stilförslag finns i `art/karaktarer.svg` och `art/alternativ_a–d.svg`.
+
+**Idé:** När stammen går upp en tidsålder målas en ny bild på väggen i byns grotta, så att stammens historia växer fram.
 
 ## 11. Färdplan
 
 1. **Prototyp 0.1** ✅ Gå runt, samla trä och sten, tända eld, hunger och värme, dag och natt.
-2. **Prototyp 0.2:** Djur att jaga, tillverka spjut, tillaga mat.
-3. **Prototyp 0.3:** Bygga första byggnaderna, eldhjärta och tidsålder 1 → 2.
-4. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
-5. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
+2. **Prototyp 0.2** ✅ Världen i grottmålningsstil, målade stenar, ny meny.
+3. **Prototyp 0.3:** Djur att jaga, tillverka spjut, tillaga mat.
+4. **Prototyp 0.4:** Bygga första byggnaderna, eldhjärta och tidsålder 1 → 2.
+5. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
+6. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
 
 ## 12. Öppna frågor
 

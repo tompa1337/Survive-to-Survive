@@ -1,16 +1,16 @@
 # Survive to Survive
 
-Överlevnadsspel på stenåldern för **1–6 spelare i co-op**: Age of Empires + Minecraft + Far Cry.
+Överlevnadsspel på stenåldern för **1–6 spelare i co-op**: Age of Empires + Minecraft + Far Cry, i stilen **levande grottmålning**.
 
-![Stammen – 6 roller](art/karaktarer.png)
+![Stammen – 6 roller](art/grottmalning_roller.png)
 
 ## Innehåll
 
 | Mapp | Vad |
 |------|-----|
 | [`docs/designdokument.md`](docs/designdokument.md) | Designdokument: kärnloop, tidsåldrar, roller, resurser, färdplan |
-| [`prototype/`](prototype/) | Spelbar prototyp 0.1 i webbläsaren (three.js) |
-| [`art/`](art/) | Konceptbilder. `karaktarer.svg` genereras av `make_characters.py` |
+| [`prototype/`](prototype/) | Spelbar prototyp 0.2 i webbläsaren (three.js), grottmålningsvärld |
+| [`art/`](art/) | Konceptbilder. `grottmalning_roller.svg` (spelets stil) genereras av `make_grottmalning.py` |
 
 ## Spela prototypen
 
@@ -23,6 +23,6 @@
 ## Ändra karaktärsbilden
 
 ```bash
-python art/make_characters.py
+python art/make_grottmalning.py
 ```
 Färger och utrustning för varje roll finns i funktionerna i skriptet.
