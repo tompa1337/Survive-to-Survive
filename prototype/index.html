@@ -84,6 +84,7 @@
 </div>
 
 <script src="lib/three.min.js"></script>
+<script src="players.js"></script>
 <script>
 (() => {
 'use strict';
@@ -678,7 +679,7 @@ function die() {
   $('gotext').textContent = 'Klicka för att försöka igen';
 }
 // testkrok för automatiska tester
-window.__game = { launchToCenter, player, stats, inv, resources, fires, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
+window.__game = { buildFire, toast, launchToCenter, player, stats, inv, resources, fires, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
 loop();
 })();
 </script>
