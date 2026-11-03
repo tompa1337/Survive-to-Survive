@@ -142,9 +142,10 @@ Referens: `art/grottmalning_roller.svg`. Äldre stilförslag finns i `art/karakt
 2. **Prototyp 0.2** ✅ Världen i grottmålningsstil, målade stenar, ny meny.
 3. **Prototyp 0.3** ✅ Djur (varg, björn, vildsvin) med beteenden, jakt och slakt, stekt kött, verktygsfält med mushjul, verktyg synligt i handen (hand, stenyxa, spjut, fackla), byggande (lägereld, vindskydd, hydda, palissad, totempåle).
 4. **Prototyp 0.4** ✅ Rollval, specialbyggnad för varje klass, karta (mini + stor), instruktionssten.
-5. **Prototyp 0.5:** Eldhjärta och tidsålder 1 → 2, pilbåge, skinnkläder.
-6. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
-7. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
+5. **Prototyp 0.5** ✅ Eldhjärtat (byggs stegvis, säker zon, återuppståndelse, rollbyte, gemensamt bränsle) och tidsålder 1 → 2 med pilbåge och skinnkläder.
+6. **Prototyp 0.6:** Mammutjakt (målet i Jägarnas tid).
+7. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
+8. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
 
 ## 12. Prototyp 0.3 – hur det fungerar nu
 
@@ -187,7 +188,7 @@ Man väljer roll på startskärmen. Varje roll har en liten bonus och en **speci
 
 **Instruktionssten:** står vid startplatsen och visar alla recept, inklusive din rolls specialbyggnad. E öppnar en läsbar version.
 
-## 14. Förslag: Första tidsåldern och eldhjärtat
+## 14. Första tidsåldern och eldhjärtat (finns i prototyp 0.5)
 
 **Tidsålder 1 – Eldens tid.** Stammen har just flytt och har ingenting. Målet är att slå läger och klara de första nätterna. Allt i prototypen hittills hör hit: samla, verktyg, eld, skydd, de första djuren och specialbyggnaderna. Tidsåldern är klar när:
 1. stammen har byggt **eldhjärtat** tillsammans,
@@ -204,6 +205,14 @@ Då kommer **Jägarnas tid** (pilbåge, skinnkläder, mammutjakt).
 - **Delad bränsle:** det slocknar om stammen slutar mata det. Då försvinner skyddet, och vargarna kommer.
 - **Växer med stammen:** för varje tidsålder byggs det ut (stenring → stensatt härd med totem → stort eldhus) och en ny bild målas på grottväggen bredvid.
 - **Lyft tidsåldern:** när kraven är uppfyllda offrar stammen resurser i elden och tidsåldern höjs.
+
+**Så fungerar det i prototypen:**
+- Eldhjärtats plats är markerad med röda flaggor nära starten. Tryck E där för att lägga i det du har. Stenar och stockar syns efter hand. Totalt krävs 40 trä, 25 sten och 4 skinn.
+- När det är färdigt får man en stor eld med stenring, sittstockar och två totempålar. Inom cirka 15 m går inga djur in, och man blir varm. Den som dör vaknar här, men tappar maten den bar.
+- E vid eldhjärtat öppnar en panel: **1** matar elden (5 trä = 300 s, max 900 s), **2** byter roll (1–6), **3** lyfter tidsåldern.
+- Kravlistan syns högst upp på skärmen. Ensam räcker det att din egen specialbyggnad är byggd. I co-op ska alla rollers byggnader stå.
+- Offret är 20 trä, 10 sten, 4 skinn och 4 ben. Därefter visas "JÄGARNAS TID" på skärmen, eldhjärtat växer, och en ring av resta stenar och två nya målade stenar dyker upp.
+- **Nytt i tidsålder 2:** Pilbåge [B] (5 trä, 2 skinn), som skjuter pilar upp till 32 m och som träd stoppar, och Skinnkläder [K] (4 skinn, 2 ben), som halverar kylan på natten.
 
 ## 15. Öppna frågor
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Survive to Survive – Prototyp 0.4</title>
+<title>Survive to Survive – Prototyp 0.5</title>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: Georgia, "Times New Roman", serif; color: #f3e8cf; user-select: none; }
@@ -28,6 +28,18 @@
   #buildbar { position: absolute; bottom: 104px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; align-items: flex-end; }
   .bb { background: rgba(35,24,18,.78); border: 2px solid #6b3f22; border-radius: 8px 3px 9px 4px; padding: 4px 10px; font-size: 12px; text-align: center; white-space: nowrap; }
   .bb.sel { border-color: #e0a23a; background: rgba(154,50,30,.85); } .bb.no { opacity: .55; } .bb.hint { opacity: .8; border-style: dashed; }
+  #agebox { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(35,24,18,.66); border: 2px solid #9a321e; border-radius: 12px 5px 14px 6px; padding: 5px 14px 6px; font-size: 12.5px; line-height: 1.5; min-width: 330px; text-align: left; }
+  #agebox b { display: block; text-align: center; font-size: 14px; color: #e0a23a; letter-spacing: 1px; }
+  #agebox .ok { color: #c9e09a; } #agebox .no { opacity: .85; }
+  #agetitle { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; opacity: 0; color: #e0a23a; text-shadow: 0 0 30px rgba(154,50,30,.9), 0 3px 0 #231812; }
+  #agetitle h1 { font-size: 64px; margin: 0; letter-spacing: 8px; } #agetitle div { font-size: 22px; color: #f3e8cf; }
+  #agetitle.show { animation: agefade 5s forwards; }
+  @keyframes agefade { 0% { opacity: 0; transform: scale(.9); } 12%,75% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+  .hopt { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 15px; margin: 8px 0; }
+  .hopt kbd { background: #231812; color: #f3e8cf; border-radius: 4px; padding: 1px 8px; font-family: inherit; }
+  .hopt .dim { opacity: .5; }
+  .fuel { height: 14px; border: 2px solid #231812; border-radius: 8px 3px 9px 4px; background: rgba(35,24,18,.25); overflow: hidden; margin: 6px 0; }
+  .fuel div { height: 100%; background: linear-gradient(90deg, #9a321e, #e0a23a); }
   #minimap { position: absolute; top: 70px; right: 16px; width: 170px; height: 170px; border-radius: 50%; border: 3px solid #231812; box-shadow: 0 0 0 2px #9a321e, 0 2px 8px rgba(0,0,0,.5); }
   #mapkey { position: absolute; top: 244px; right: 16px; width: 170px; text-align: center; font-size: 11px; opacity: .85; text-shadow: 0 1px 2px #000; }
   #rolechip { margin-top: 4px; font-size: 13px; display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 2px #000; }
@@ -80,6 +92,7 @@
     <div class="bar"><label><span>Värme</span><span id="wav"></span></label><div class="track"><div class="fill" id="wa" style="background:#e0a23a"></div></div></div>
     <div id="rolechip"></div>
   </div>
+  <div id="agebox"></div>
   <div id="clock"><b id="day">Dag 1</b><span id="tod"></span></div>
   <canvas id="minimap" width="170" height="170"></canvas>
   <div id="mapkey">[M] stor karta</div>
@@ -92,16 +105,18 @@
   <div id="help">
     <kbd>Mushjul</kbd>/<kbd>1–5</kbd> byt verktyg · <kbd>Klick</kbd> använd<br>
     <kbd>E</kbd> samla / slakta / mata elden · <kbd>Q</kbd> ät · <kbd>M</kbd> karta<br>
-    <kbd>C</kbd> yxa · <kbd>V</kbd> spjut · <kbd>T</kbd> fackla · <kbd>F</kbd> stek kött vid eld<br>
+    <kbd>C</kbd> yxa · <kbd>V</kbd> spjut · <kbd>T</kbd> fackla · <kbd>F</kbd> stek kött vid eld<br><kbd>B</kbd> pilbåge · <kbd>K</kbd> skinnkläder (tidsålder 2)<br>
     <kbd>Shift</kbd> spring · <kbd>Space</kbd> hoppa · <kbd>Esc</kbd> paus
   </div>
 </div>
+<div id="agetitle"><h1>JÄGARNAS TID</h1><div>Tidsålder 2 – stammen har slagit rot</div></div>
+<div class="panel" id="heart"><div class="sheet" style="min-width:520px"><h2>ELDHJÄRTAT</h2><div id="heartbody"></div><div class="close">[E] eller [Esc] för att stänga</div></div></div>
 <div class="panel" id="tablet"><div class="sheet"><h2>SÅ BYGGER STAMMEN</h2><div class="rgrid" id="recipes"></div><div class="close">[E] eller [Esc] för att stänga</div></div></div>
 <div class="panel" id="bigmap"><div class="sheet"><h2>KARTAN</h2><canvas id="bigmapc" width="620" height="620"></canvas><div class="close" id="maplegend"></div><div class="close">[M] eller [Esc] för att stänga</div></div></div>
 <div id="overlay">
   <div class="box">
     <h1>SURVIVE TO SURVIVE</h1>
-    <div class="sub">Prototyp 0.4 · Välj din roll · Överlev nätterna</div>
+    <div class="sub">Prototyp 0.5 · Bygg eldhjärtat · Nå Jägarnas tid</div>
     <div class="keys">
       <kbd>WASD</kbd><span>Gå (Shift springer)</span>
       <kbd>Mushjul / 1–5</kbd><span>Byt verktyg i handen</span>
@@ -411,7 +426,7 @@ for (let i = 0; i < 26; i++) {
 const player = { pos: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(), yaw: Math.PI, pitch: 0, onGround: false };
 player.pos.y = groundY(0, 0);
 const stats = { hp: 100, hunger: 85, warmth: 80 };
-const inv = { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, hide: 0, bone: 0, axe: false, spear: false, torch: false };
+const inv = { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, hide: 0, bone: 0, axe: false, spear: false, torch: false, bow: false, clothes: false };
 const upg = { hand: 0, axe: 0, spear: 0, torch: 0 };     // förbättringar från Verkstaden
 const ROLES = [
   { id: 'Jägaren',      col: 0x9a321e, css: '#9a321e', bonus: '+30 % skada mot djur',         special: 'trap' },
@@ -465,6 +480,7 @@ const ICON = {
   axe: '<line x1="8" y1="25" x2="20" y2="7" stroke="#6b3f22" stroke-width="3" stroke-linecap="round"/><path d="M15 6 L24 3 L26 12 L19 13 Z" fill="#d8c3a0" stroke="#231812" stroke-width="1.6"/>',
   spear: '<line x1="5" y1="26" x2="22" y2="9" stroke="#6b3f22" stroke-width="2.6" stroke-linecap="round"/><path d="M20 6 L27 3 L25 11 Z" fill="#231812"/>',
   torch: '<line x1="14" y1="27" x2="14" y2="13" stroke="#6b3f22" stroke-width="3.4" stroke-linecap="round"/><path d="M14 2 Q20 9 17 13 L11 13 Q8 9 14 2 Z" fill="#9a321e" stroke="#231812" stroke-width="1.2"/><path d="M14 6 Q17 10 15.5 12.5 L12.5 12.5 Q11 10 14 6 Z" fill="#e0a23a"/>',
+  bow: '<path d="M8 3 Q26 15 8 27" fill="none" stroke="#6b3f22" stroke-width="3"/><line x1="8" y1="3" x2="8" y2="27" stroke="#f3e8cf" stroke-width="1"/><line x1="4" y1="15" x2="26" y2="15" stroke="#231812" stroke-width="1.6"/><path d="M24 12 L29 15 L24 18Z" fill="#231812"/>',
   build: '<path d="M4 25 L14 5 L24 25 Z" fill="#d9c3a0" stroke="#231812" stroke-width="1.6"/><path d="M11 25 L14 18 L17 25 Z" fill="#231812"/><path d="M8 18 L20 18" stroke="#9a321e" stroke-width="2"/>',
 };
 const TOOLS = [
@@ -473,6 +489,7 @@ const TOOLS = [
   { id: 'spear', name: 'Spjut',   dmg: 15, reach: 4.6, gather: 1, cost: { wood: 4, stone: 2 }, key: 'V' },
   { id: 'torch', name: 'Fackla',  dmg: 4,  reach: 2.6, gather: 1, cost: { wood: 3 }, key: 'T' },
   { id: 'build', name: 'Bygga',   dmg: 0,  reach: 3.0, gather: 1 },
+  { id: 'bow',   name: 'Pilbåge', dmg: 12, reach: 32,  gather: 1, cost: { wood: 5, hide: 2 }, key: 'B', age: 2 },
 ];
 let sel = 0;
 const tool = () => TOOLS[sel];
@@ -500,6 +517,7 @@ function cycleTool(dir) {
 }
 function craft(id) {
   const i = TOOLS.findIndex(t => t.id === id), t = TOOLS[i];
+  if (t.age && age < t.age) { toast(`${t.name} låses upp i Jägarnas tid (tidsålder 2)`); return; }
   if (inv[id]) { toast(`Du har redan ${t.name.toLowerCase()}`); selectTool(i); return; }
   const c = effCost(t.cost, 'tool');
   if (!canPay(c)) { toast(`${t.name} kräver ${costText(c)}`); return; }
@@ -536,6 +554,12 @@ function buildViewModel() {
     const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.1, 6), toon(0xd9c3a0)); wrap.position.set(0, 0.42, 0); g.add(wrap);
     const f1 = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 6), matFlame); f1.position.set(0, 0.58, 0); f1.userData.flame = 1; g.add(f1);
     const f2 = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.2, 5), matFlame2); f2.position.set(0, 0.58, 0); f2.userData.flame = 2; g.add(f2);
+  } else if (id === 'bow') {
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.022, 5, 14, Math.PI), matHandle);
+    arc.rotation.set(0, Math.PI / 2, Math.PI / 2); arc.position.set(-0.02, 0.05, -0.05); g.add(arc);
+    const str = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.84, 3), toon(PAL.wht)); str.position.set(-0.02, 0.05, 0.09); str.userData.noOutline = true; g.add(str);
+    const ar = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.75, 4), matHandle); ar.rotation.x = Math.PI / 2; ar.position.set(-0.02, 0.05, -0.25); g.add(ar);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.08, 4), matDark); tip.rotation.x = -Math.PI / 2; tip.position.set(-0.02, 0.05, -0.64); g.add(tip);
   } else if (id === 'build') {
     for (let i = 0; i < 3; i++) {
       const s = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 5), matHandle);
@@ -895,12 +919,17 @@ function updateAnimals(dt, night) {
       }
       if (torch && d < 6.5) { const k = (6.5 - d) / 6.5 * 3; wantX -= px / d * k; wantZ -= pz / d * k; }
     }
+    if (heart && heart.fuel > 0) {                    // eldhjärtats säkra zon: inga djur går in
+      const hx = o.position.x - heart.x, hz = o.position.z - heart.z, hd = Math.hypot(hx, hz);
+      if (hd < 17) { const k = (17 - hd) / 17 * 5; wantX += hx / hd * k; wantZ += hz / hd * k; spd = Math.max(spd, info.speed * 0.6); }
+    }
     for (const h of hutAt) {
       const hx = o.position.x - h.x, hz = o.position.z - h.z, hd = Math.hypot(hx, hz);
       if (hd < 3) { wantX += hx / hd * 3; wantZ += hz / hd * 3; }
     }
     // --- anfall
-    if ((a.state === 'chase' || a.state === 'charge') && d < info.atkR && a.cd <= 0 && !player.flying) {
+    const safe = heart && heart.fuel > 0 && Math.hypot(player.pos.x - heart.x, player.pos.z - heart.z) < 14;
+    if (!safe && (a.state === 'chase' || a.state === 'charge') && d < info.atkR && a.cd <= 0 && !player.flying) {
       if (!(info.fearFire && torch && a.kind === 'wolf')) { hurtPlayer(info.dmg, info.name); a.cd = info.atkCd; }
       if (a.state === 'charge') { a.state = 'flee'; a.t = 4; }
       spd *= 0.2;
@@ -941,7 +970,7 @@ function renderHotbar() {
     const own = owned(t);
     return `<div class="hs ${i === sel ? 'sel' : ''} ${own ? '' : 'lock'}"><span class="num">${i + 1}</span>
       <svg viewBox="0 0 30 30" width="30" height="30">${ICON[t.id]}</svg><div>${toolName(t)}</div>
-      ${own ? '' : `<div class="rec">[${t.key}] ${costText(effCost(t.cost, 'tool'))}</div>`}</div>`;
+      ${own ? '' : `<div class="rec">${t.age && age < t.age ? 'Tidsålder 2' : `[${t.key}] ${costText(effCost(t.cost, 'tool'))}`}</div>`}</div>`;
   }).join('');
 }
 function renderBuildbar() {
@@ -958,6 +987,7 @@ function updateUI(night) {
   if (key !== lastInvKey) {
     lastInvKey = key;
     const rows = [['Trä', inv.wood], ['Sten', inv.stone], ['Bär', inv.berry], ['Rått kött', inv.meat], ['Stekt kött', inv.cooked], ['Skinn', inv.hide], ['Ben', inv.bone]];
+    if (inv.clothes) rows.push(['Skinnkläder', '✓']);
     $('res').innerHTML = rows.map(([n, v]) => `<div class="${v ? '' : 'zero'}">${n}<b>${v}</b></div>`).join('');
     renderHotbar(); if (tool().id === 'build') renderBuildbar();
   }
@@ -992,6 +1022,7 @@ function pause() { closePanel(); running = false; overlay.style.display = 'flex'
 addEventListener('keydown', e => {
   keys[e.code] = true;
   if (!running) return;
+  if (uiOpen === 'heart' && /^Digit[1-6]$/.test(e.code)) { heartKey(+e.code.slice(5)); return; }
   if (uiOpen) { if (e.code === 'Escape' || e.code === 'KeyE' || (e.code === 'KeyM' && uiOpen === 'bigmap')) closePanel(); return; }
   if (e.code === 'KeyM') { openPanel('bigmap'); return; }
   if (e.code === 'KeyE') interact(false);
@@ -1001,7 +1032,9 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyT') craft('torch');
   if (e.code === 'KeyF') cook();
   if (e.code === 'KeyR' && tool().id === 'build') { buildSel = (buildSel + 1) % availBuilds().length; makeGhost(); renderBuildbar(); }
-  if (/^Digit[1-5]$/.test(e.code)) selectTool(+e.code.slice(5) - 1);
+  if (/^Digit[1-6]$/.test(e.code)) selectTool(+e.code.slice(5) - 1);
+  if (e.code === 'KeyB') craft('bow');
+  if (e.code === 'KeyK') craftClothes();
   if (e.code === 'Space' && player.onGround) { player.vel.y = 6.5; player.onGround = false; }
   if (e.code === 'Escape' && !pointerOk) pause();
 });
@@ -1033,6 +1066,7 @@ function lookTarget() {
   let o = hit.object;
   while (o && !o.userData.res && !o.userData.animal && !o.userData.building && !fires.some(f => f.g === o)) o = o.parent;
   if (!o) return null;
+  if (!o.userData.animal && hit.distance > 3.8) return null;
   if (o.userData.building) return { building: o.userData.building };
   if (o.userData.animal) return hit.distance <= Math.max(tool().reach, o.userData.animal.state === 'dead' ? 3.2 : 0) ? { animal: o.userData.animal } : null;
   if (o.userData.res) return { res: o.userData.res };
@@ -1042,6 +1076,7 @@ function interact(isClick) {
   if (dead) return;
   if (uiOpen) { closePanel(); return; }
   if (isClick && tool().id === 'build') { placeBuilding(); return; }
+  if (isClick && tool().id === 'bow') { shootArrow(); return; }
   const nowMs = performance.now(); if (nowMs < gatherCd) return;
   gatherCd = nowMs + (tool().id === 'spear' ? 600 : 420);
   vmSwing = 1;
@@ -1052,12 +1087,14 @@ function interact(isClick) {
     if (a.state === 'dead') butcher(a); else hitAnimal(a, toolDmg());
     return;
   }
+  if (t.fire && t.fire.heart) { openPanel('heart'); return; }
   if (t.fire) {
     if (inv.wood < 1) { toast('Du behöver trä för att mata elden'); return; }
     inv.wood--; t.fire.fuel = Math.min(300, t.fire.fuel + 45); toast('Elden flammar upp (+45 s)'); return;
   }
   const r = t.res; if (r.type === 'monolith') { toast('En målning från stammens förfäder'); return; }
   if (r.type === 'guide') { openPanel('tablet'); return; }
+  if (r.type === 'heartsite') { contributeHeart(); return; }
   const power = toolGather();
   r.shake = 0.25;
   if (r.type === 'tree') {
@@ -1152,7 +1189,8 @@ let mapT = 0;
 const towerSees = (x, z) => buildings.some(b => b.id === 'tower' && Math.hypot(b.x - x, b.z - z) < 90);
 const A_COL = { wolf: '#8d939c', bear: '#6b3f22', boar: '#9a321e' };
 function drawMarkers(c, toPx, scale, showAll) {
-  for (const f of fires) { const [x, y] = toPx(f.x, f.z); c.fillStyle = f.fuel > 0 ? '#e0a23a' : '#6b3f22'; c.strokeStyle = '#231812'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 4, 0, 7); c.fill(); c.stroke(); }
+  if (!heart) { const [x, y] = toPx(HX, HZ); c.strokeStyle = '#9a321e'; c.lineWidth = 2; c.setLineDash([4, 3]); c.beginPath(); c.arc(x, y, 7, 0, 7); c.stroke(); c.setLineDash([]); }
+  for (const f of fires) { const [x, y] = toPx(f.x, f.z), r = f.heart ? 7 : 4; c.fillStyle = f.fuel > 0 ? '#e0a23a' : '#6b3f22'; c.strokeStyle = f.heart ? '#9a321e' : '#231812'; c.lineWidth = f.heart ? 3 : 2; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke(); }
   for (const b of buildings) {
     const [x, y] = toPx(b.x, b.z); c.strokeStyle = '#231812'; c.lineWidth = 1.5;
     c.fillStyle = b.id === 'hut' ? '#f3e8cf' : b.id === 'tower' ? '#231812' : b.id === 'cairn' ? '#6b3f22' : b.id === 'circle' ? '#9a321e' : b.id === 'garden' ? '#c98a1f' : '#b08a62';
@@ -1188,13 +1226,14 @@ function drawBigMap() {
   big.drawImage(baseMap, 0, 0, S, S);
   drawMarkers(big, (x, z) => [(x + WORLD / 2) * k, (z + WORLD / 2) * k], k, true);
 }
-$('maplegend').innerHTML = '<b style="color:#e0a23a">●</b> eld &nbsp; <b style="color:#f3e8cf">▲</b> hydda &nbsp; <b style="color:#6b3f22">◆</b> varde &nbsp; <b style="color:#8d939c">●</b> varg &nbsp; <b style="color:#6b3f22">●</b> björn &nbsp; <b style="color:#9a321e">●</b> vildsvin &nbsp; <b style="color:#9a321e">▮</b> målad sten · Djur syns nära dig – eller överallt kring ett vakttorn';
+$('maplegend').innerHTML = '<b style="color:#e0a23a;font-size:18px">◉</b> eldhjärtat &nbsp; <b style="color:#e0a23a">●</b> eld &nbsp; <b style="color:#f3e8cf">▲</b> hydda &nbsp; <b style="color:#6b3f22">◆</b> varde &nbsp; <b style="color:#8d939c">●</b> varg &nbsp; <b style="color:#6b3f22">●</b> björn &nbsp; <b style="color:#9a321e">●</b> vildsvin &nbsp; <b style="color:#9a321e">▮</b> målad sten · Djur syns nära dig – eller överallt kring ett vakttorn';
 
 // ---------- Paneler (instruktionssten, stor karta) ----------
 let uiOpen = null;
 function openPanel(id) {
   uiOpen = id; $(id).style.display = 'flex';
   if (id === 'tablet') renderRecipes();
+  if (id === 'heart') { heartMode = 'main'; renderHeartPanel(); }
   if (id === 'bigmap') drawBigMap();
 }
 function closePanel() { if (uiOpen) $(uiOpen).style.display = 'none'; uiOpen = null; }
@@ -1217,6 +1256,11 @@ function renderRecipes() {
   for (const t of TOOLS.filter(t => t.cost)) h += card(ICON[t.id], `${t.name} [${t.key}]`, costText(effCost(t.cost, 'tool')), { axe: 'dubbel insamling', spear: 'lång räckvidd, mycket skada', torch: 'ljus, värme, skrämmer vargar' }[t.id]);
   h += '<h3>Byggen – välj Bygga [5], byt med [R], klicka för att bygga</h3>';
   for (const b of availBuilds()) h += card(BICON[b.id], (b.role ? '★ ' : '') + b.name + (b.role ? ` (bara ${b.role})` : ''), costText(bCost(b)), b.desc, !!b.role);
+  h += '<h3>Eldhjärtat och tidsåldrar</h3>';
+  h += card(BICON.fire, 'Eldhjärtat', `${costText(HEART_COST)} – lägg i med E på platsen`, 'byggs tillsammans: säker zon, värme, återuppståndelse, rollbyte', true);
+  h += card(ICON.build, 'Lyft tidsåldern', `offra ${costText(AGE_COST)} i eldhjärtat`, 'när alla krav i listan högst upp är klara', true);
+  h += card(ICON.bow, 'Pilbåge [B]' + (age < 2 ? ' – tidsålder 2' : ''), costText(TOOLS.find(t => t.id === 'bow').cost), 'skjut djur på 30 m avstånd');
+  h += card(BICON.shelter, 'Skinnkläder [K]' + (age < 2 ? ' – tidsålder 2' : ''), costText(CLOTHES_COST), 'halverar kylan på natten');
   h += '<h3>Mat och överlevnad</h3>';
   h += card(ICON.torch, 'Stek kött [F]', 'stå vid en brinnande eld', 'stekt kött mättar mest');
   h += card(ICON.hand, 'Ät [Q]', 'stekt kött → bär → rått kött', 'rått kött ger magont');
@@ -1257,6 +1301,151 @@ function paintGuide() {
   addRes(g, { type: 'guide', hp: 1, label: 'Instruktionssten', radius: 1.6 });
 }
 
+// ---------- Eldhjärtat och tidsåldrar ----------
+let age = 1, nightsWithHeart = 0, heart = null, heartMode = 'main';
+const HEART_COST = { wood: 40, stone: 25, hide: 4 };
+const AGE_COST = { wood: 20, stone: 10, hide: 4, bone: 4 };
+const CLOTHES_COST = { hide: 4, bone: 2 };
+const heartGiven = { wood: 0, stone: 0, hide: 0 };
+const HX = -7, HZ = 13;
+for (const r of resources) if (r.type !== 'guide' && !r.gone && Math.hypot(r.obj.position.x - HX, r.obj.position.z - HZ) < 8) { r.gone = true; scene.remove(r.obj); }
+const site = (() => {
+  const g = new THREE.Group();
+  for (let i = 0; i < 14; i++) { const a = i / 14 * 6.28, st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.34, 0), toon(0xb8a688)); st.position.set(Math.cos(a) * 2.3, 0.12, Math.sin(a) * 2.3); st.visible = false; st.name = 'st' + i; g.add(st); }
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * 6.28, pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 5), matLog); pole.position.set(Math.cos(a) * 3, 0.65, Math.sin(a) * 3); g.add(pole);
+    const fl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.02), toon(PAL.red)); fl.position.set(Math.cos(a) * 3 + 0.17, 1.15, Math.sin(a) * 3); g.add(fl);
+  }
+  for (let i = 0; i < 10; i++) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.5, 5), matLog); l.rotation.set(0, i * 0.63, Math.PI / 2); l.position.y = 0.12 + Math.floor(i / 5) * 0.2; l.visible = false; l.name = 'lg' + i; g.add(l); }
+  const hides = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.7), toon(0xd9c3a0)); hides.position.set(1.2, 0.06, -1.3); hides.rotation.y = 0.4; hides.visible = false; hides.name = 'hides'; g.add(hides);
+  outline(g, 1.1);
+  g.position.set(HX, groundY(HX, HZ), HZ);
+  return addRes(g, { type: 'heartsite', hp: 1, label: 'Eldhjärtats plats', radius: 0.05 });
+})();
+const heartProgress = () => Object.keys(HEART_COST).map(k => `${RES_NAMES[k]} ${heartGiven[k]}/${HEART_COST[k]}`).join(', ');
+function updateSite() {
+  const ns = Math.round(heartGiven.stone / HEART_COST.stone * 14), nl = Math.round(heartGiven.wood / HEART_COST.wood * 10);
+  for (let i = 0; i < 14; i++) site.obj.getObjectByName('st' + i).visible = i < ns;
+  for (let i = 0; i < 10; i++) site.obj.getObjectByName('lg' + i).visible = i < nl;
+  site.obj.getObjectByName('hides').visible = heartGiven.hide > 0;
+}
+function contributeHeart() {
+  let any = false;
+  for (const k of Object.keys(HEART_COST)) { const give = Math.min(HEART_COST[k] - heartGiven[k], inv[k]); if (give > 0) { inv[k] -= give; heartGiven[k] += give; any = true; } }
+  updateSite();
+  if (Object.keys(HEART_COST).every(k => heartGiven[k] >= HEART_COST[k])) { completeHeart(); return; }
+  toast(any ? `Du lade resurser i eldhjärtat (${heartProgress()})` : `Eldhjärtat behöver: ${heartProgress()}`);
+}
+function completeHeart() {
+  site.gone = true; scene.remove(site.obj);
+  heart = buildFire(HX, HZ); heart.heart = true; heart.fuel = 600;
+  heart.g.scale.setScalar(1.9); heart.light.distance = 45;
+  const deco = new THREE.Group(); deco.name = 'heartdeco';
+  for (let i = 0; i < 12; i++) { const a = i / 12 * 6.28, s2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5, 0), toon(0xb8a688)); s2.scale.y = 0.7; s2.position.set(Math.cos(a) * 2.6, 0.15, Math.sin(a) * 2.6); deco.add(s2); }
+  for (let i = 0; i < 4; i++) { const a = i / 4 * 6.28 + 0.4, l = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 2.2, 7), matLog); l.rotation.set(0, -a, Math.PI / 2); l.position.set(Math.cos(a) * 5, 0.25, Math.sin(a) * 5); deco.add(l); }
+  for (const sx of [-1, 1]) { const t = makeTotem(); t.scale.setScalar(0.85); t.position.set(sx * 4.2, 0, -3.4); deco.add(t); }
+  outline(deco, 1.07); deco.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  deco.position.set(HX, groundY(HX, HZ), HZ); scene.add(deco); heart.deco = deco;
+  obstacles.push({ x: HX - 4.2, z: HZ - 3.4, r: 0.45 }, { x: HX + 4.2, z: HZ - 3.4, r: 0.45 });
+  const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 0.7; requestAnimationFrame(() => { f.style.transition = 'opacity 1.4s'; f.style.opacity = 0; });
+  toast('ELDHJÄRTAT BRINNER! Djur går inte in i ljuset, och du vaknar här om du dör.');
+}
+function upgradeHeart() {
+  heart.g.scale.setScalar(2.5); heart.light.distance = 60;
+  const ring = new THREE.Group();
+  for (let i = 0; i < 9; i++) {
+    const a = i / 9 * 6.28, h = 2.4 + (i % 3) * 0.5, s2 = new THREE.Mesh(new THREE.BoxGeometry(0.7, h, 0.45), toon(0xd8c3a0));
+    s2.position.set(Math.cos(a) * 7.5, h / 2 - 0.1, Math.sin(a) * 7.5); s2.rotation.y = -a; ring.add(s2);
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), new THREE.MeshBasicMaterial({ color: i % 2 ? PAL.red : PAL.yel }));
+    dot.position.set(Math.cos(a) * 7.26, h - 0.5, Math.sin(a) * 7.26); dot.userData.noOutline = true; ring.add(dot);
+  }
+  outline(ring, 1.05); ring.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  ring.position.set(HX, groundY(HX, HZ), HZ); scene.add(ring);
+  makePaintedStone(HX + 9.5, HZ - 2, 'mammoth', -1.3);
+  makePaintedStone(HX - 9.5, HZ - 2, 'hunters', 1.3);
+}
+const specialName = () => BUILDS.find(b => b.id === role.special).name;
+const reqs = () => [
+  ['Bygg eldhjärtat tillsammans', !!heart],
+  [`Bygg din specialbyggnad (${specialName()})`, buildings.some(b => b.id === role.special)],
+  [`Överlev 3 nätter med eldhjärtat brinnande (${Math.min(3, nightsWithHeart)}/3)`, nightsWithHeart >= 3],
+];
+function renderAgeBox() {
+  if (age === 1) $('agebox').innerHTML = '<b>Tidsålder 1 · Eldens tid</b>' + reqs().map(([t, ok]) => `<div class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '○'} ${t}</div>`).join('')
+    + (reqs().every(r => r[1]) ? '<div class="ok">→ Gå till eldhjärtat och lyft tidsåldern!</div>' : '');
+  else $('agebox').innerHTML = '<b>Tidsålder 2 · Jägarnas tid</b><div class="ok">Nytt: Pilbåge [B] · Skinnkläder [K] · större eldhjärta</div><div class="no">○ Nästa mål: fäll en mammut tillsammans (kommer snart)</div>';
+}
+function renderHeartPanel() {
+  const pct = Math.min(100, heart.fuel / 900 * 100), all = reqs().every(r => r[1]);
+  let h = `<div>Bränsle: ${Math.ceil(heart.fuel)} s av 900</div><div class="fuel"><div style="width:${pct}%"></div></div>`;
+  if (heartMode === 'roles') {
+    h += '<div class="hopt">' + ROLES.map((r, i) => `<kbd>${i + 1}</kbd><span>${r === role ? '<b>' : ''}${r.id} – ★ ${BUILDS.find(b => b.id === r.special).name}${r === role ? ' (nu)</b>' : ''}</span>`).join('') + '</div>';
+  } else {
+    h += '<div class="hopt">';
+    h += `<kbd>1</kbd><span>Mata elden med 5 trä (+300 s) – du har ${inv.wood} trä</span>`;
+    h += `<kbd>2</kbd><span>Byt roll (nu: ${role.id})</span>`;
+    if (age === 1) h += `<kbd>3</kbd><span class="${all ? '' : 'dim'}">Lyft tidsåldern – offra ${costText(AGE_COST)}${all ? '' : ' (kraven är inte klara)'}</span>`;
+    else h += `<kbd>3</kbd><span class="dim">Tidsålder 2 är nådd – nästa lyft kommer senare</span>`;
+    h += '</div>';
+    if (age === 1) h += reqs().map(([t, ok]) => `<div>${ok ? '✓' : '○'} ${t}</div>`).join('');
+  }
+  $('heartbody').innerHTML = h;
+}
+function heartKey(n) {
+  if (heartMode === 'roles') {
+    if (n >= 1 && n <= 6) { role = ROLES[n - 1]; applyRole(); toast(`Du är nu ${role.id}`); heartMode = 'main'; renderHeartPanel(); }
+    return;
+  }
+  if (n === 1) {
+    const w = Math.min(5, inv.wood); if (!w) { toast('Du har inget trä'); return; }
+    inv.wood -= w; heart.fuel = Math.min(900, heart.fuel + w * 60); toast(`Eldhjärtat flammar upp (+${w * 60} s)`);
+  } else if (n === 2) heartMode = 'roles';
+  else if (n === 3) ageUp();
+  renderHeartPanel();
+}
+function ageUp() {
+  if (age !== 1) return;
+  if (!reqs().every(r => r[1])) { toast('Alla krav för tidsålder 1 är inte klara än'); return; }
+  if (!canPay(AGE_COST)) { toast(`Offret kräver ${costText(AGE_COST)}`); return; }
+  pay(AGE_COST); age = 2; upgradeHeart(); closePanel();
+  const t = $('agetitle'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+  const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 0.9; requestAnimationFrame(() => { f.style.transition = 'opacity 2s'; f.style.opacity = 0; });
+  toast('Stammen offrade i eldhjärtat – en ny tid börjar!'); toast('Nytt: Pilbåge [B] och Skinnkläder [K]');
+  lastInvKey = ''; renderAgeBox(); paintGuide();
+}
+function craftClothes() {
+  if (age < 2) { toast('Skinnkläder låses upp i Jägarnas tid (tidsålder 2)'); return; }
+  if (inv.clothes) { toast('Du har redan skinnkläder'); return; }
+  if (!canPay(CLOTHES_COST)) { toast(`Skinnkläder kräver ${costText(CLOTHES_COST)}`); return; }
+  pay(CLOTHES_COST); inv.clothes = true; toast('Du syr skinnkläder – nätterna känns mindre kalla');
+}
+// pilar
+const arrows = [];
+const arrowGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.8, 4); arrowGeo.rotateX(Math.PI / 2);
+const arrowMat = toon(PAL.brn);
+let bowCd = 0;
+function shootArrow() {
+  const nowMs = performance.now(); if (nowMs < bowCd) return; bowCd = nowMs + 850; vmSwing = 1;
+  ray.setFromCamera(center, camera); ray.far = 32;
+  const objs = resources.filter(r => !r.gone).map(r => r.obj).concat(animals.filter(a => a.state !== 'dead').map(a => a.obj));
+  const hit = ray.intersectObjects(objs, true)[0];
+  const from = camera.position.clone().add(ray.ray.direction.clone().multiplyScalar(0.8));
+  const to = hit ? hit.point.clone() : camera.position.clone().add(ray.ray.direction.clone().multiplyScalar(32));
+  const m = new THREE.Mesh(arrowGeo, arrowMat); m.position.copy(from); m.lookAt(to); scene.add(m);
+  let target = null;
+  if (hit) { let o = hit.object; while (o && !o.userData.animal) o = o.parent; if (o) target = o.userData.animal; }
+  arrows.push({ m, from, to, t: 0, dur: Math.max(0.08, from.distanceTo(to) / 60), target, life: 4 });
+}
+function updateArrows(dt) {
+  for (const a of [...arrows]) {
+    if (a.t < 1) {
+      a.t = Math.min(1, a.t + dt / a.dur); a.m.position.lerpVectors(a.from, a.to, a.t);
+      if (a.t >= 1 && a.target && a.target.state !== 'dead') { hitAnimal(a.target, toolDmg()); scene.remove(a.m); arrows.splice(arrows.indexOf(a), 1); continue; }
+    } else if ((a.life -= dt) <= 0) { scene.remove(a.m); arrows.splice(arrows.indexOf(a), 1); }
+  }
+}
+renderAgeBox();
+
 // ---------- Rollval ----------
 let started = false;
 function renderRolePick() {
@@ -1275,7 +1464,7 @@ buildViewModel(); renderHotbar(); makeGhost(); selectTool(0);
 spawnAnimal('boar', 30, 22); spawnAnimal('boar', 33, 25); spawnAnimal('boar', -40, -30);
 spawnAnimal('bear', -70, 60); spawnAnimal('bear', 90, 80);
 spawnAnimal('wolf', -80, -70); spawnAnimal('wolf', -82, -73); spawnAnimal('wolf', -78, -74);
-let popT = 0;
+let popT = 0, ageT = 0;
 
 // ---------- Loop ----------
 const clock = new THREE.Clock();
@@ -1293,7 +1482,11 @@ function loop() {
     if (timeOfDay < prev) dayCount++;
     if (prev < 0.75 && timeOfDay >= 0.75) toast('Solen går ner – se till att ha en eld!');
     if (prev < 0.8 && timeOfDay >= 0.8) toast('Du hör vargar yla i mörkret…');
-    if (prev < 0.25 && timeOfDay >= 0.25) toast(`Gryning – du överlevde natten! (Dag ${dayCount})`);
+    if (prev < 0.25 && timeOfDay >= 0.25) {
+      toast(`Gryning – du överlevde natten! (Dag ${dayCount})`);
+      if (heart && heart.fuel > 0) { nightsWithHeart++; toast(`Natt ${Math.min(3, nightsWithHeart)}/3 med eldhjärtat brinnande`); }
+      else if (heart) toast('Eldhjärtat slocknade i natt – natten räknas inte');
+    }
 
     // rörelse
     const sprint = keys.ShiftLeft || keys.ShiftRight;
@@ -1339,13 +1532,13 @@ function loop() {
     updateAnimals(dt, sky.night);
 
     // överlevnad
-    const nearFire = !!burningFireNear(player.pos.x, player.pos.z, 6);
+    const nearFire = !!burningFireNear(player.pos.x, player.pos.z, 6) || (heart && heart.fuel > 0 && Math.hypot(heart.x - player.pos.x, heart.z - player.pos.z) < 10);
     const inHut = inBuilding('hut', 2.0), underShelter = inBuilding('shelter', 2.6);
     const inWater = groundY(player.pos.x, player.pos.z) < -1.6 && Math.hypot(player.pos.x - lake.x, player.pos.z - lake.z) < lake.r + 6;
     stats.hunger = Math.max(0, stats.hunger - (sprint ? 0.55 : 0.32) * dt);
     if (nearFire) stats.warmth = Math.min(100, stats.warmth + 7 * dt);
     else if (inHut) stats.warmth = Math.min(100, stats.warmth + 3 * dt);
-    else if (sky.night) stats.warmth = Math.max(0, stats.warmth - 1.1 * dt * (underShelter ? 0.4 : 1) * (tool().id === 'torch' ? 0.6 : 1));
+    else if (sky.night) stats.warmth = Math.max(0, stats.warmth - 1.1 * dt * (underShelter ? 0.4 : 1) * (tool().id === 'torch' ? 0.6 : 1) * (inv.clothes ? 0.5 : 1));
     else stats.warmth += (75 - stats.warmth) * 0.05 * dt;
     if (inWater) stats.warmth = Math.max(0, stats.warmth - 4 * dt);
     if (stats.hunger <= 0 || stats.warmth <= 0) { stats.hp = Math.max(0, stats.hp - 2.5 * dt); deathCause = 'Kyla och hunger är farligare än man tror.'; }
@@ -1362,9 +1555,13 @@ function loop() {
     if (stats.hp <= 0) die();
 
     updateGhost();
+    updateArrows(dt);
+    ageT -= dt; if (ageT <= 0) { renderAgeBox(); if (uiOpen === 'heart') renderHeartPanel(); ageT = 0.5; }
     const t = tool().id === 'build' ? null : lookTarget();
     let p = '';
-    if (t && t.fire) p = `Lägereld (${Math.ceil(t.fire.fuel)} s) – [E] lägg på trä` + (inv.meat ? ' · [F] stek kött' : '');
+    if (t && t.fire && t.fire.heart) p = `Eldhjärtat (${Math.ceil(t.fire.fuel)} s bränsle) – [E] öppna` + (inv.meat ? ' · [F] stek kött' : '');
+    else if (t && t.res && t.res.type === 'heartsite') p = `[E] Lägg resurser i eldhjärtat – ${heartProgress()}`;
+    else if (t && t.fire) p = `Lägereld (${Math.ceil(t.fire.fuel)} s) – [E] lägg på trä` + (inv.meat ? ' · [F] stek kött' : '');
     else if (t && t.animal) p = t.animal.state === 'dead' ? `[E] Slakta ${t.animal.info.name.toLowerCase()}` : `${t.animal.info.name} (${Math.max(0, Math.ceil(t.animal.hp))}/${t.animal.info.hp}) – [Klick] anfall`;
     else if (t && t.building) {
       const bd = t.building;
@@ -1434,6 +1631,13 @@ function loop() {
   renderer.render(scene, camera);
 }
 function die() {
+  if (heart && heart.fuel > 0) {                       // återuppstå vid eldhjärtat
+    stats.hp = 60; stats.warmth = Math.max(stats.warmth, 60); stats.hunger = Math.max(stats.hunger, 40);
+    inv.meat = 0; inv.cooked = 0; inv.berry = Math.floor(inv.berry / 2);
+    player.pos.set(heart.x + 3.5, groundY(heart.x + 3.5, heart.z), heart.z); player.vel.set(0, 0, 0); player.flying = false;
+    const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 0.8; requestAnimationFrame(() => { f.style.transition = 'opacity 1.5s'; f.style.opacity = 0; });
+    toast(`Du vaknade vid eldhjärtat. ${deathCause} Maten du bar är borta.`); return;
+  }
   dead = true; running = false;
   if (document.exitPointerLock) document.exitPointerLock();
   overlay.style.display = 'flex';
@@ -1445,8 +1649,9 @@ function die() {
 // testkrok för automatiska tester
 window.__game = { buildFire, toast, launchToCenter, player, stats, inv, resources, fires, animals, buildings, spawnAnimal, hitAnimal,
   selectTool, cycleTool, craft, interact, placeBuilding, BUILDS, availBuilds, setBuild: i => { buildSel = i; makeGhost(); renderBuildbar(); },
-  setRole: i => { role = ROLES[i]; applyRole(); }, openPanel, closePanel, buildingAction, upg, drawBigMap,
-  tool, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
+  setRole: i => { role = ROLES[i]; applyRole(); }, contributeHeart, ageUp, heartKey, shootArrow, reqs,
+  getHeart: () => heart, getAge: () => age, setNights: n => { nightsWithHeart = n; }, craftClothes, HX, HZ, openPanel, closePanel, buildingAction, upg, drawBigMap,
+  die, tool, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
 loop();
 })();
 </script>
