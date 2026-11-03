@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Survive to Survive – Prototyp 0.1</title>
+<title>Survive to Survive – Prototyp 0.3</title>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; font-family: Georgia, "Times New Roman", serif; color: #f3e8cf; user-select: none; }
@@ -16,14 +16,24 @@
   .bar .fill { height: 100%; transition: width .2s; }
   #clock { position: absolute; top: 16px; right: 16px; text-align: right; text-shadow: 0 1px 3px #000; font-size: 15px; }
   #clock b { font-size: 20px; display: block; }
-  #inv { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
-  .slot { background: rgba(35,24,18,.7); border: 2px solid #9a321e; border-radius: 10px 4px 12px 5px; padding: 6px 12px; min-width: 78px; text-align: center; font-size: 13px; }
-  .slot b { display: block; font-size: 20px; }
+  #hotbar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: flex-end; }
+  .hs { width: 86px; min-height: 66px; background: rgba(35,24,18,.72); border: 2px solid #6b3f22; border-radius: 10px 4px 12px 5px; text-align: center; font-size: 12px; padding: 3px 2px 4px; position: relative; transition: transform .12s; }
+  .hs svg { display: block; margin: 2px auto 0; }
+  .hs.sel { border-color: #e0a23a; background: rgba(154,50,30,.82); transform: translateY(-6px); }
+  .hs.lock { opacity: .45; }
+  .hs .num { position: absolute; top: 2px; left: 6px; font-size: 10px; opacity: .7; }
+  .hs .rec { font-size: 9px; opacity: .9; line-height: 1.2; }
+  #res { position: absolute; bottom: 16px; left: 16px; font-size: 13px; line-height: 1.55; background: rgba(35,24,18,.62); border: 2px solid #231812; border-radius: 10px 4px 12px 5px; padding: 6px 12px; min-width: 140px; }
+  #res b { float: right; margin-left: 14px; } #res .zero { opacity: .45; }
+  #buildbar { position: absolute; bottom: 104px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; align-items: flex-end; }
+  .bb { background: rgba(35,24,18,.78); border: 2px solid #6b3f22; border-radius: 8px 3px 9px 4px; padding: 4px 10px; font-size: 12px; text-align: center; white-space: nowrap; }
+  .bb.sel { border-color: #e0a23a; background: rgba(154,50,30,.85); } .bb.no { opacity: .55; } .bb.hint { opacity: .8; border-style: dashed; }
+  #hurt { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 220px rgba(154,20,10,.95); opacity: 0; }
   #cross { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #9a321e; border: 2px solid #f3e8cf; }
   #flash { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(243,232,207,.2), rgba(201,138,31,.9)); opacity: 0; }
   #paint { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(70,35,12,.55) 100%); }
   #prompt { position: absolute; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); font-size: 15px; text-shadow: 0 1px 3px #000; white-space: nowrap; }
-  #toasts { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); text-align: center; }
+  #toasts { position: absolute; left: 50%; bottom: 190px; transform: translateX(-50%); text-align: center; }
   .toast { font-size: 15px; text-shadow: 0 1px 3px #000; animation: fade 2.6s forwards; }
   @keyframes fade { 0%,70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
   #help { position: absolute; bottom: 18px; right: 16px; font-size: 12px; line-height: 1.6; text-align: right; opacity: .8; text-shadow: 0 1px 2px #000; }
@@ -43,6 +53,7 @@
 <div id="paint"></div>
 <div id="flash"></div>
 <div id="vignette"></div>
+<div id="hurt"></div>
 <div id="hud">
   <div id="stats">
     <div class="bar"><label><span>Hälsa</span><span id="hpv"></span></label><div class="track"><div class="fill" id="hp" style="background:#9a321e"></div></div></div>
@@ -53,31 +64,29 @@
   <div id="cross"></div>
   <div id="prompt"></div>
   <div id="toasts"></div>
-  <div id="inv">
-    <div class="slot">Trä<b id="iwood">0</b></div>
-    <div class="slot">Sten<b id="istone">0</b></div>
-    <div class="slot">Bär<b id="iberry">0</b></div>
-    <div class="slot" id="axeslot" style="opacity:.4">Stenyxa<b id="iaxe">–</b></div>
-  </div>
+  <div id="buildbar"></div>
+  <div id="hotbar"></div>
+  <div id="res"></div>
   <div id="help">
-    <kbd>Klick</kbd>/<kbd>E</kbd> samla · <kbd>Q</kbd> ät bär<br>
-    <kbd>C</kbd> stenyxa (3 trä, 2 sten)<br>
-    <kbd>F</kbd> lägereld (5 trä, 3 sten) · <kbd>E</kbd> vid eld: lägg på trä<br>
+    <kbd>Mushjul</kbd>/<kbd>1–5</kbd> byt verktyg · <kbd>Klick</kbd> använd<br>
+    <kbd>E</kbd> samla / slakta / mata elden · <kbd>Q</kbd> ät<br>
+    <kbd>C</kbd> yxa · <kbd>V</kbd> spjut · <kbd>T</kbd> fackla · <kbd>F</kbd> stek kött vid eld<br>
     <kbd>Shift</kbd> spring · <kbd>Space</kbd> hoppa · <kbd>Esc</kbd> paus
   </div>
 </div>
 <div id="overlay">
   <div class="box">
     <h1>SURVIVE TO SURVIVE</h1>
-    <div class="sub">Prototyp 0.2 · Grottmålningsvärlden · Överlev nätterna</div>
+    <div class="sub">Prototyp 0.3 · Djur, byggande och verktyg · Överlev nätterna</div>
     <div class="keys">
-      <kbd>WASD</kbd><span>Gå</span>
-      <kbd>Mus</kbd><span>Titta runt</span>
-      <kbd>Klick / E</kbd><span>Hugg träd, bryt sten, plocka bär</span>
-      <kbd>C</kbd><span>Tillverka stenyxa: samlar dubbelt så snabbt</span>
-      <kbd>F</kbd><span>Bygg lägereld: värme och ljus på natten</span>
-      <kbd>E</kbd><span>(vid elden) Lägg på trä så den inte slocknar</span>
-      <kbd>Q</kbd><span>Ät bär</span>
+      <kbd>WASD</kbd><span>Gå (Shift springer)</span>
+      <kbd>Mushjul / 1–5</kbd><span>Byt verktyg i handen</span>
+      <kbd>Klick</kbd><span>Hugg, bryt, anfall – eller bygg</span>
+      <kbd>E</kbd><span>Samla, slakta, lägg trä på elden</span>
+      <kbd>C · V · T</kbd><span>Tillverka stenyxa, spjut, fackla</span>
+      <kbd>R</kbd><span>Byt byggnad (med Bygga i handen)</span>
+      <kbd>F</kbd><span>Stek kött vid elden</span>
+      <kbd>Q</kbd><span>Ät (stekt kött är bäst)</span>
     </div>
     <div class="go" id="gotext">Klicka för att börja</div>
   </div>
@@ -85,6 +94,7 @@
 
 <script src="lib/three.min.js"></script>
 <script src="players.js"></script>
+<script src="animals.js"></script>
 <script>
 (() => {
 'use strict';
@@ -376,9 +386,10 @@ for (let i = 0; i < 26; i++) {
 const player = { pos: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(), yaw: Math.PI, pitch: 0, onGround: false };
 player.pos.y = groundY(0, 0);
 const stats = { hp: 100, hunger: 85, warmth: 80 };
-const inv = { wood: 0, stone: 0, berry: 0, axe: false };
+const inv = { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, hide: 0, bone: 0, axe: false, spear: false, torch: false };
 const keys = {};
-let running = false, dead = false, gatherCd = 0;
+let running = false, dead = false, gatherCd = 0, deathCause = 'Kyla och hunger är farligare än man tror.';
+const obstacles = [];          // {x, z, r} – byggnader man inte kan gå igenom
 
 // ---------- Lägereldar ----------
 const fires = [];
@@ -405,19 +416,378 @@ function buildFire(x, z) {
   const f = { g, flame, flame2, light, fuel: 120, x, z };
   fires.push(f); return f;
 }
+const burningFireNear = (x, z, r) => fires.find(f => f.fuel > 0 && Math.hypot(f.x - x, f.z - z) < r);
+
+// ---------- Verktyg (verktygsfält) ----------
+const ICON = {
+  hand: '<path d="M8 22 L8 12 Q8 9 10 9 L10 7 Q12 5 14 7 L14 6 Q16 4 18 6 L18 8 Q20 7 21 9 L21 18 Q21 23 16 24 L12 24 Z" fill="#c98a5a" stroke="#231812" stroke-width="1.6"/>',
+  axe: '<line x1="8" y1="25" x2="20" y2="7" stroke="#6b3f22" stroke-width="3" stroke-linecap="round"/><path d="M15 6 L24 3 L26 12 L19 13 Z" fill="#d8c3a0" stroke="#231812" stroke-width="1.6"/>',
+  spear: '<line x1="5" y1="26" x2="22" y2="9" stroke="#6b3f22" stroke-width="2.6" stroke-linecap="round"/><path d="M20 6 L27 3 L25 11 Z" fill="#231812"/>',
+  torch: '<line x1="14" y1="27" x2="14" y2="13" stroke="#6b3f22" stroke-width="3.4" stroke-linecap="round"/><path d="M14 2 Q20 9 17 13 L11 13 Q8 9 14 2 Z" fill="#9a321e" stroke="#231812" stroke-width="1.2"/><path d="M14 6 Q17 10 15.5 12.5 L12.5 12.5 Q11 10 14 6 Z" fill="#e0a23a"/>',
+  build: '<path d="M4 25 L14 5 L24 25 Z" fill="#d9c3a0" stroke="#231812" stroke-width="1.6"/><path d="M11 25 L14 18 L17 25 Z" fill="#231812"/><path d="M8 18 L20 18" stroke="#9a321e" stroke-width="2"/>',
+};
+const TOOLS = [
+  { id: 'hand',  name: 'Hand',    dmg: 3,  reach: 2.6, gather: 1 },
+  { id: 'axe',   name: 'Stenyxa', dmg: 8,  reach: 3.0, gather: 2, cost: { wood: 3, stone: 2 }, key: 'C' },
+  { id: 'spear', name: 'Spjut',   dmg: 15, reach: 4.6, gather: 1, cost: { wood: 4, stone: 2 }, key: 'V' },
+  { id: 'torch', name: 'Fackla',  dmg: 4,  reach: 2.6, gather: 1, cost: { wood: 3 }, key: 'T' },
+  { id: 'build', name: 'Bygga',   dmg: 0,  reach: 3.0, gather: 1 },
+];
+let sel = 0;
+const tool = () => TOOLS[sel];
+const owned = t => t.id === 'hand' || t.id === 'build' || inv[t.id];
+const RES_NAMES = { wood: 'trä', stone: 'sten', berry: 'bär', hide: 'skinn', bone: 'ben', meat: 'kött' };
+const costText = c => Object.entries(c).map(([k, v]) => `${v} ${RES_NAMES[k]}`).join(', ');
+const canPay = c => Object.entries(c).every(([k, v]) => inv[k] >= v);
+const pay = c => Object.entries(c).forEach(([k, v]) => inv[k] -= v);
+
+function selectTool(i) {
+  if (i < 0 || i >= TOOLS.length || !owned(TOOLS[i])) return;
+  sel = i; buildViewModel(); renderHotbar();
+  $('buildbar').style.display = tool().id === 'build' ? 'flex' : 'none';
+  if (tool().id === 'build') renderBuildbar();
+  if (ghost) ghost.visible = tool().id === 'build';
+}
+function cycleTool(dir) {
+  for (let k = 1; k <= TOOLS.length; k++) {
+    const i = (sel + dir * k + TOOLS.length * 2) % TOOLS.length;
+    if (owned(TOOLS[i])) { selectTool(i); return; }
+  }
+}
+function craft(id) {
+  const i = TOOLS.findIndex(t => t.id === id), t = TOOLS[i];
+  if (inv[id]) { toast(`Du har redan ${t.name.toLowerCase()}`); selectTool(i); return; }
+  if (!canPay(t.cost)) { toast(`${t.name} kräver ${costText(t.cost)}`); return; }
+  pay(t.cost); inv[id] = true; toast(`Du tillverkade: ${t.name}!`); selectTool(i);
+}
+
+// ---------- Verktyget i handen (förstapersonsvy) ----------
+scene.add(camera);
+const vm = new THREE.Group(); camera.add(vm);
+const VM_BASE = new THREE.Vector3(0.36, -0.36, -0.72);
+vm.position.copy(VM_BASE); vm.scale.setScalar(0.5);
+const matSkin = toon(0xb5764a), matHandle = toon(PAL.brn), matStoneHead = toon(0xd8c3a0), matDark = toon(PAL.blk);
+let vmSwing = 0, torchLight = null;
+function buildViewModel() {
+  while (vm.children.length) vm.remove(vm.children[0]);
+  torchLight = null;
+  const g = new THREE.Group();
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 0.6, 7), matSkin);
+  arm.rotation.x = Math.PI / 2 - 0.25; arm.position.set(0.04, -0.08, 0.28); g.add(arm);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.078, 0.05, 7), toon(PAL.red));
+  band.rotation.copy(arm.rotation); band.position.set(0.04, -0.04, 0.12); g.add(band);
+  g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.085, 0), matSkin));
+  const id = tool().id;
+  if (id === 'axe') {
+    const h = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.028, 0.62, 6), matHandle); h.position.set(0, 0.2, 0); g.add(h);
+    const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.09, 0), matStoneHead); head.scale.set(1.9, 1, 0.7); head.position.set(-0.1, 0.46, 0); g.add(head);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.012, 4, 8), toon(PAL.red)); tie.rotation.x = Math.PI / 2; tie.position.set(0, 0.44, 0); g.add(tie);
+  } else if (id === 'spear') {
+    const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.7, 5), matHandle); sh.rotation.x = Math.PI / 2; sh.position.set(0, 0.02, -0.5); g.add(sh);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 4), matDark); tip.rotation.x = -Math.PI / 2; tip.position.set(0, 0.02, -1.44); g.add(tip);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.01, 4, 8), toon(PAL.red)); tie.position.set(0, 0.02, -1.3); g.add(tie);
+  } else if (id === 'torch') {
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.5, 6), matHandle); st.position.set(0, 0.16, 0); g.add(st);
+    const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.1, 6), toon(0xd9c3a0)); wrap.position.set(0, 0.42, 0); g.add(wrap);
+    const f1 = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 6), matFlame); f1.position.set(0, 0.58, 0); f1.userData.flame = 1; g.add(f1);
+    const f2 = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.2, 5), matFlame2); f2.position.set(0, 0.58, 0); f2.userData.flame = 2; g.add(f2);
+  } else if (id === 'build') {
+    for (let i = 0; i < 3; i++) {
+      const s = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 5), matHandle);
+      s.rotation.z = Math.PI / 2 + (i - 1) * 0.15; s.position.set(0, 0.05 + i * 0.04, 0); g.add(s);
+    }
+  }
+  outline(g, 1.14);
+  g.traverse(m => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = false; } });
+  vm.add(g);
+  if (id === 'torch') { torchLight = new THREE.PointLight(0xff9a4a, 1.8, 16, 1.5); torchLight.position.set(0, 0.7, -0.2); vm.add(torchLight); }
+}
+
+// ---------- Byggnader ----------
+const buildings = [];
+const matHide = toon(0xd9c3a0);
+const tipiTex = canvasTex(512, 256, (g, w, h) => {
+  g.fillStyle = '#e2cfa8'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#9a321e'; g.fillRect(0, h * 0.62, w, 14); g.fillRect(0, h * 0.86, w, 10);
+  g.strokeStyle = '#231812'; g.lineWidth = 5; g.beginPath();
+  for (let x = 0; x <= w; x += 32) { g.lineTo(x, h * 0.72); g.lineTo(x + 16, h * 0.79); } g.stroke();
+  g.fillStyle = '#231812'; for (let x = 16; x < w; x += 32) { g.beginPath(); g.arc(x, h * 0.45, 5, 0, 7); g.fill(); }
+  g.fillStyle = '#c98a1f'; for (let x = 64; x < w; x += 128) { g.beginPath(); g.arc(x, h * 0.25, 14, 0, 7); g.fill(); }
+});
+function makeShelter() {
+  const g = new THREE.Group();
+  for (const x of [-1.25, 1.25]) {
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 1.9, 6), matLog); p.position.set(x, 0.95, 0.4); g.add(p);
+  }
+  const ridge = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.9, 6), matLog); ridge.rotation.z = Math.PI / 2; ridge.position.set(0, 1.85, 0.4); g.add(ridge);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.08, 2.3), toon(0x7a5a34)); roof.rotation.x = -0.92; roof.position.set(0, 0.95, -0.5); g.add(roof);
+  for (let i = -3; i <= 3; i++) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, 2.3), toon(PAL.blk)); b.rotation.x = -0.92; b.position.set(i * 0.4, 0.97, -0.5); g.add(b);
+  }
+  return g;
+}
+function makeHut() {
+  const g = new THREE.Group();
+  const cover = new THREE.Mesh(new THREE.ConeGeometry(2.1, 3.4, 10, 1, true), toon(0xffffff, { map: tipiTex, side: THREE.DoubleSide }));
+  cover.position.y = 1.7; g.add(cover);
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * Math.PI * 2, p = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.0, 5), matLog);
+    p.position.set(Math.cos(a) * 0.14, 3.65, Math.sin(a) * 0.14); p.rotation.set(Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35); g.add(p);
+  }
+  const door = new THREE.Mesh(new THREE.CircleGeometry(0.55, 3), new THREE.MeshBasicMaterial({ color: PAL.blk }));
+  door.position.set(0, 0.62, 1.62); door.rotation.set(-0.53, 0, Math.PI / 2); door.scale.set(1.3, 1, 1); door.userData.noOutline = true; g.add(door);
+  return g;
+}
+function makeFence() {
+  const g = new THREE.Group();
+  for (let i = 0; i < 7; i++) {
+    const x = -1.5 + i * 0.5, hgt = 1.9 + (i % 2) * 0.25;
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, hgt, 6), matLog); log.position.set(x, hgt / 2, 0); g.add(log);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.35, 6), toon(0xc9a06a)); tip.position.set(x, hgt + 0.17, 0); g.add(tip);
+  }
+  for (const y of [0.6, 1.4]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.4, 5), toon(PAL.red)); b.rotation.z = Math.PI / 2; b.position.set(0, y, 0.15); g.add(b); }
+  return g;
+}
+function makeTotem() {
+  const g = new THREE.Group();
+  const cols = [PAL.blk, PAL.yel, PAL.red];
+  cols.forEach((c, i) => {
+    const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.38, 1.1, 8), toon(c)); seg.position.y = 0.55 + i * 1.1; g.add(seg);
+    for (const x of [-0.13, 0.13]) {
+      const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), new THREE.MeshBasicMaterial({ color: PAL.wht }));
+      e.position.set(x, 0.7 + i * 1.1, 0.34); e.userData.noOutline = true; g.add(e);
+    }
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.05), new THREE.MeshBasicMaterial({ color: i === 0 ? PAL.wht : PAL.blk }));
+    mouth.position.set(0, 0.38 + i * 1.1, 0.36); mouth.userData.noOutline = true; g.add(mouth);
+  });
+  const wings = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.18, 0.3), toon(PAL.red)); wings.position.y = 3.3; g.add(wings);
+  const top = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 6), toon(PAL.wht)); top.position.y = 3.7; g.add(top);
+  return g;
+}
+const BUILDS = [
+  { id: 'fire',    name: 'Lägereld',  cost: { wood: 5, stone: 3 },           desc: 'värme, ljus, laga mat, skrämmer vargar' },
+  { id: 'shelter', name: 'Vindskydd', cost: { wood: 8 },                     desc: 'halverar nattkylan', make: makeShelter, r: 0 },
+  { id: 'hut',     name: 'Hydda',     cost: { wood: 16, stone: 4, hide: 2 }, desc: 'varmt inne, vargar kommer inte in', make: makeHut, r: 0 },
+  { id: 'fence',   name: 'Palissad',  cost: { wood: 4 },                     desc: 'stoppar djur och spelare', make: makeFence },
+  { id: 'totem',   name: 'Totempåle', cost: { wood: 6, stone: 2 },           desc: 'stammens symboler', make: makeTotem },
+];
+let buildSel = 0, ghost = null, ghostOk = false;
+const ghostOkMat = new THREE.MeshBasicMaterial({ color: 0xe0a23a, transparent: true, opacity: 0.45, depthWrite: false });
+const ghostBadMat = new THREE.MeshBasicMaterial({ color: 0x9a321e, transparent: true, opacity: 0.4, depthWrite: false });
+function makeGhost() {
+  if (ghost) scene.remove(ghost);
+  const b = BUILDS[buildSel];
+  ghost = b.id === 'fire' ? (() => { const g = new THREE.Group();
+    for (let i = 0; i < 8; i++) { const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0)); st.position.set(Math.cos(i / 8 * 6.28) * 0.75, 0.1, Math.sin(i / 8 * 6.28) * 0.75); g.add(st); }
+    const fl = new THREE.Mesh(new THREE.ConeGeometry(0.38, 1.1, 6)); fl.position.y = 0.6; g.add(fl); return g; })() : b.make();
+  ghost.traverse(m => { if (m.isMesh) { m.castShadow = false; } });
+  ghost.visible = tool().id === 'build';
+  scene.add(ghost);
+}
+function ghostPlace() {
+  const d = BUILDS[buildSel].id === 'hut' ? 5.2 : 3.8;
+  const x = player.pos.x - Math.sin(player.yaw) * d, z = player.pos.z - Math.cos(player.yaw) * d;
+  return { x, z, y: groundY(x, z), rot: player.yaw };
+}
+function updateGhost() {
+  if (!ghost || tool().id !== 'build') return;
+  const p = ghostPlace(), b = BUILDS[buildSel];
+  ghost.position.set(p.x, p.y, p.z); ghost.rotation.y = p.rot;
+  const lim = WORLD / 2 - 12;
+  ghostOk = canPay(b.cost) && p.y > -1.3 && Math.abs(p.x) < lim && Math.abs(p.z) < lim;
+  const mat = ghostOk ? ghostOkMat : ghostBadMat;
+  ghost.traverse(m => { if (m.isMesh) m.material = mat; });
+}
+function placeBuilding() {
+  const b = BUILDS[buildSel];
+  if (!canPay(b.cost)) { toast(`${b.name} kräver ${costText(b.cost)}`); return; }
+  if (!ghostOk) { toast('Det går inte att bygga här'); return; }
+  const p = ghostPlace(); pay(b.cost); vmSwing = 1;
+  if (b.id === 'fire') { buildFire(p.x, p.z); toast('Lägereld byggd!'); renderBuildbar(); return; }
+  const g = b.make(); outline(g, 1.08);
+  g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  g.position.set(p.x, p.y, p.z); g.rotation.y = p.rot; scene.add(g);
+  const bd = { id: b.id, name: b.name, g, x: p.x, z: p.z }; buildings.push(bd);
+  if (b.id === 'fence') {                      // kollision längs palissaden
+    const ax = Math.cos(p.rot), az = -Math.sin(p.rot);
+    for (let i = -3; i <= 3; i++) obstacles.push({ x: p.x + ax * i * 0.5, z: p.z + az * i * 0.5, r: 0.3 });
+  } else if (b.id === 'totem') obstacles.push({ x: p.x, z: p.z, r: 0.45 });
+  toast(`${b.name} byggd!`); renderBuildbar();
+}
+const inBuilding = (id, r) => buildings.find(b => b.id === id && Math.hypot(b.x - player.pos.x, b.z - player.pos.z) < r);
+
+// ---------- Djur ----------
+const animals = [];
+const A_INFO = {
+  wolf: { name: 'Varg', make: () => Animals.makeWolf(), hp: 30, speed: 7.4, dmg: 7, atkR: 1.9, atkCd: 1.1, loot: { meat: 1, hide: 2, bone: 2 }, fearFire: true },
+  bear: { name: 'Björn', make: () => Animals.makeBear(), hp: 90, speed: 6.0, dmg: 20, atkR: 2.6, atkCd: 1.6, loot: { meat: 5, hide: 4, bone: 3 }, fearFire: true },
+  boar: { name: 'Vildsvin', make: () => Animals.makeBoar(), hp: 45, speed: 5.2, dmg: 14, atkR: 1.7, atkCd: 1.2, loot: { meat: 4, hide: 1, bone: 1 }, fearFire: false },
+};
+function spawnAnimal(kind, x, z) {
+  const info = A_INFO[kind], obj = info.make();
+  obj.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  obj.position.set(x, groundY(x, z), z); obj.rotation.y = Math.random() * 6.28;
+  scene.add(obj);
+  const a = { kind, info, obj, hp: info.hp, state: 'wander', t: Math.random() * 3, dir: Math.random() * 6.28,
+              home: { x, z }, cd: 0, phase: 0, vx: 0, vz: 0, hitT: 0, angry: 0, deadT: 0 };
+  obj.userData.animal = a; animals.push(a); return a;
+}
+function spawnSpot(minD, maxD) {
+  const lim = WORLD / 2 - 25;
+  for (let k = 0; k < 30; k++) {
+    const a = Math.random() * 6.28, d = minD + Math.random() * (maxD - minD);
+    const x = player.pos.x + Math.cos(a) * d, z = player.pos.z + Math.sin(a) * d;
+    if (Math.abs(x) < lim && Math.abs(z) < lim && groundY(x, z) > -1 && Math.hypot(x, z) > 25) return { x, z };
+  }
+  return null;
+}
+function populate(night) {
+  const alive = k => animals.filter(a => a.kind === k && a.state !== 'dead').length;
+  const want = { boar: 9, bear: 3, wolf: night ? 12 : 4 };
+  for (const kind of ['boar', 'bear', 'wolf']) {
+    let n = want[kind] - alive(kind);
+    while (n > 0) {
+      const p = spawnSpot(kind === 'wolf' && night ? 45 : 55, kind === 'bear' ? 140 : 110); if (!p) break;
+      const pack = kind === 'wolf' ? Math.min(n, 3) : kind === 'boar' ? Math.min(n, 2) : 1;
+      for (let i = 0; i < pack; i++) spawnAnimal(kind, p.x + (Math.random() - 0.5) * 4, p.z + (Math.random() - 0.5) * 4);
+      n -= pack;
+    }
+  }
+  if (!night) {                                       // vargar drar sig undan på dagen
+    animals.filter(a => a.kind === 'wolf' && a.state !== 'dead' && a.angry <= 0 && Math.hypot(a.obj.position.x - player.pos.x, a.obj.position.z - player.pos.z) > 70)
+      .slice(want.wolf).forEach(removeAnimal);
+  }
+}
+function removeAnimal(a) { scene.remove(a.obj); animals.splice(animals.indexOf(a), 1); }
+function hurtPlayer(dmg, who) {
+  stats.hp = Math.max(0, stats.hp - dmg); deathCause = `${who} tog dig.`;
+  toast(`${who} anfaller! −${dmg}`);
+  const f = $('hurt'); f.style.transition = 'none'; f.style.opacity = 0.8;
+  requestAnimationFrame(() => { f.style.transition = 'opacity .6s'; f.style.opacity = 0; });
+}
+function hitAnimal(a, dmg) {
+  a.hp -= dmg; a.hitT = 0.25; a.angry = 25;
+  if (a.hp <= 0) {
+    a.state = 'dead'; a.deadT = 0; toast(`${a.info.name} fälld! [E] för att slakta`); return;
+  }
+  toast(`Träff! ${a.info.name} −${dmg}`);
+  if (a.kind === 'boar') { a.state = 'charge'; a.t = 3.5; }
+  else if (a.kind === 'wolf' && a.hp < 12) { a.state = 'flee'; a.t = 6; }
+  else a.state = 'chase';
+}
+function butcher(a) {
+  const got = Object.entries(a.info.loot).map(([k, v]) => { inv[k] += v; return `${v} ${RES_NAMES[k]}`; });
+  toast(`Slaktade ${a.info.name.toLowerCase()}: ${got.join(', ')}`); removeAnimal(a);
+}
+const tmpV = new THREE.Vector3();
+function updateAnimals(dt, night) {
+  const torch = tool().id === 'torch';
+  const hutAt = buildings.filter(b => b.id === 'hut');
+  for (const a of [...animals]) {
+    const o = a.obj, info = a.info;
+    if (a.hitT > 0) { a.hitT -= dt; const s = 1 + Math.sin(a.hitT * 40) * 0.06; o.scale.setScalar(s); } else o.scale.setScalar(1);
+    if (a.state === 'dead') {
+      a.deadT += dt; o.rotation.x = Math.min(Math.PI / 2, a.deadT * 4);
+      if (a.deadT > 150) removeAnimal(a); continue;
+    }
+    const px = player.pos.x - o.position.x, pz = player.pos.z - o.position.z, d = Math.hypot(px, pz);
+    if (d > 200) continue;                              // långt bort: vila
+    a.t -= dt; a.cd -= dt; a.angry -= dt;
+    let wantX = 0, wantZ = 0, spd = 0;
+    // --- beslut
+    if (a.state === 'wander') {
+      if (a.t <= 0) { a.dir = Math.random() * 6.28; a.t = 3 + Math.random() * 4; }
+      if (a.kind === 'bear' && Math.hypot(o.position.x - a.home.x, o.position.z - a.home.z) > 18) a.dir = Math.atan2(a.home.z - o.position.z, a.home.x - o.position.x);
+      wantX = Math.cos(a.dir); wantZ = Math.sin(a.dir); spd = info.speed * (a.t % 4 < 1.2 ? 0 : 0.28);
+      if (a.kind === 'wolf' && (night ? d < 30 : d < 7)) a.state = night ? 'chase' : 'flee', a.t = 5;
+      if (a.kind === 'bear' && Math.hypot(player.pos.x - a.home.x, player.pos.z - a.home.z) < 13) { a.state = 'chase'; toast('En björn försvarar sitt revir!'); }
+      if (a.kind === 'boar' && d < 5 && a.t > 2) { a.dir = Math.atan2(-pz, -px); }
+    } else if (a.state === 'chase') {
+      wantX = px / d; wantZ = pz / d; spd = info.speed;
+      if (a.kind === 'bear' && a.angry <= 0 && Math.hypot(player.pos.x - a.home.x, player.pos.z - a.home.z) > 32) { a.state = 'wander'; a.t = 0; }
+      if (a.kind === 'wolf' && !night && a.angry <= 0) { a.state = 'flee'; a.t = 6; }
+      if (d > 60) { a.state = 'wander'; a.t = 0; }
+    } else if (a.state === 'charge') {
+      wantX = px / d; wantZ = pz / d; spd = info.speed * 1.75;
+      if (a.t <= 0) { a.state = 'flee'; a.t = 4; }
+    } else if (a.state === 'flee') {
+      wantX = -px / d; wantZ = -pz / d; spd = info.speed * 0.9;
+      if (a.t <= 0) { a.state = 'wander'; a.t = 0; }
+    }
+    // --- rädsla för eld, fackla och hyddor (vargar och björnar)
+    if (info.fearFire) {
+      for (const f of fires) {
+        if (f.fuel <= 0) continue;
+        const fx = o.position.x - f.x, fz = o.position.z - f.z, fd = Math.hypot(fx, fz);
+        if (fd < 9) { const k = (9 - fd) / 9 * 3; wantX += fx / fd * k; wantZ += fz / fd * k; spd = Math.max(spd, info.speed * 0.6); }
+      }
+      if (torch && d < 6.5) { const k = (6.5 - d) / 6.5 * 3; wantX -= px / d * k; wantZ -= pz / d * k; }
+    }
+    for (const h of hutAt) {
+      const hx = o.position.x - h.x, hz = o.position.z - h.z, hd = Math.hypot(hx, hz);
+      if (hd < 3) { wantX += hx / hd * 3; wantZ += hz / hd * 3; }
+    }
+    // --- anfall
+    if ((a.state === 'chase' || a.state === 'charge') && d < info.atkR && a.cd <= 0 && !player.flying) {
+      if (!(info.fearFire && torch && a.kind === 'wolf')) { hurtPlayer(info.dmg, info.name); a.cd = info.atkCd; }
+      if (a.state === 'charge') { a.state = 'flee'; a.t = 4; }
+      spd *= 0.2;
+    }
+    // --- rörelse
+    const wl = Math.hypot(wantX, wantZ);
+    const tx = wl > 0 ? wantX / wl * spd : 0, tz = wl > 0 ? wantZ / wl * spd : 0;
+    a.vx += (tx - a.vx) * Math.min(1, dt * 4); a.vz += (tz - a.vz) * Math.min(1, dt * 4);
+    let nx = o.position.x + a.vx * dt, nz = o.position.z + a.vz * dt;
+    for (const ob of obstacles) {
+      const dx = nx - ob.x, dz = nz - ob.z, dd = Math.hypot(dx, dz), m = ob.r + 0.6;
+      if (dd < m && dd > 1e-4) { nx = ob.x + dx / dd * m; nz = ob.z + dz / dd * m; }
+    }
+    const lim = WORLD / 2 - 15;
+    if (groundY(nx, nz) < -1.3 || Math.abs(nx) > lim || Math.abs(nz) > lim) { a.dir += Math.PI; a.vx *= -0.5; a.vz *= -0.5; nx = o.position.x; nz = o.position.z; }
+    o.position.set(nx, groundY(nx, nz), nz);
+    const sp = Math.hypot(a.vx, a.vz);
+    if (sp > 0.2) {
+      const target = Math.atan2(-a.vz, a.vx);
+      let diff = target - o.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      o.rotation.y += diff * Math.min(1, dt * 6);
+    }
+    a.phase += sp * dt * 2.6;
+    const legs = o.userData.legs, amp = Math.min(1, sp / 2) * 0.55;
+    if (legs) legs.forEach((l, i) => { l.rotation.z = Math.sin(a.phase + (i === 0 || i === 3 ? 0 : Math.PI)) * amp; });
+  }
+}
 
 // ---------- UI ----------
 const $ = id => document.getElementById(id);
 function toast(msg) {
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg;
   $('toasts').appendChild(d); setTimeout(() => d.remove(), 2600);
+  while ($('toasts').children.length > 4) $('toasts').firstChild.remove();
 }
+function renderHotbar() {
+  $('hotbar').innerHTML = TOOLS.map((t, i) => {
+    const own = owned(t);
+    return `<div class="hs ${i === sel ? 'sel' : ''} ${own ? '' : 'lock'}"><span class="num">${i + 1}</span>
+      <svg viewBox="0 0 30 30" width="30" height="30">${ICON[t.id]}</svg><div>${t.name}</div>
+      ${own ? '' : `<div class="rec">[${t.key}] ${costText(t.cost)}</div>`}</div>`;
+  }).join('');
+}
+function renderBuildbar() {
+  $('buildbar').innerHTML = BUILDS.map((b, i) => `<div class="bb ${i === buildSel ? 'sel' : ''} ${canPay(b.cost) ? '' : 'no'}"><b>${b.name}</b><br>${costText(b.cost)}${i === buildSel ? `<br><i>${b.desc}</i>` : ''}</div>`).join('')
+    + '<div class="bb hint">[R] byt · [Klick] bygg</div>';
+}
+let lastInvKey = '';
 function updateUI(night) {
   $('hp').style.width = stats.hp + '%'; $('hpv').textContent = Math.ceil(stats.hp);
   $('hu').style.width = stats.hunger + '%'; $('huv').textContent = Math.ceil(stats.hunger);
   $('wa').style.width = stats.warmth + '%'; $('wav').textContent = Math.ceil(stats.warmth);
-  $('iwood').textContent = inv.wood; $('istone').textContent = inv.stone; $('iberry').textContent = inv.berry;
-  $('iaxe').textContent = inv.axe ? '✓' : '–'; $('axeslot').style.opacity = inv.axe ? 1 : 0.4;
+  const key = JSON.stringify(inv);
+  if (key !== lastInvKey) {
+    lastInvKey = key;
+    const rows = [['Trä', inv.wood], ['Sten', inv.stone], ['Bär', inv.berry], ['Rått kött', inv.meat], ['Stekt kött', inv.cooked], ['Skinn', inv.hide], ['Ben', inv.bone]];
+    $('res').innerHTML = rows.map(([n, v]) => `<div class="${v ? '' : 'zero'}">${n}<b>${v}</b></div>`).join('');
+    renderHotbar(); if (tool().id === 'build') renderBuildbar();
+  }
   $('day').textContent = 'Dag ' + dayCount;
   const h = Math.floor(timeOfDay * 24), m = Math.floor((timeOfDay * 24 - h) * 60);
   $('tod').textContent = (night ? 'Natt · ' : 'Dag · ') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
@@ -448,17 +818,22 @@ function pause() { running = false; overlay.style.display = 'flex'; $('gotext').
 addEventListener('keydown', e => {
   keys[e.code] = true;
   if (!running) return;
-  if (e.code === 'KeyE') interact();
+  if (e.code === 'KeyE') interact(false);
   if (e.code === 'KeyQ') eat();
-  if (e.code === 'KeyC') craftAxe();
-  if (e.code === 'KeyF') placeFire();
+  if (e.code === 'KeyC') craft('axe');
+  if (e.code === 'KeyV') craft('spear');
+  if (e.code === 'KeyT') craft('torch');
+  if (e.code === 'KeyF') cook();
+  if (e.code === 'KeyR' && tool().id === 'build') { buildSel = (buildSel + 1) % BUILDS.length; makeGhost(); renderBuildbar(); }
+  if (/^Digit[1-5]$/.test(e.code)) selectTool(+e.code.slice(5) - 1);
   if (e.code === 'Space' && player.onGround) { player.vel.y = 6.5; player.onGround = false; }
   if (e.code === 'Escape' && !pointerOk) pause();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('wheel', e => { if (running) cycleTool(e.deltaY > 0 ? 1 : -1); }, { passive: true });
 canvas.addEventListener('mousedown', () => { dragging = true; dragMoved = 0; });
 addEventListener('mouseup', () => {
-  if (running && (document.pointerLockElement || dragMoved < 6)) interact();
+  if (running && (document.pointerLockElement || dragMoved < 6)) interact(true);
   dragging = false;
 });
 addEventListener('mousemove', e => {
@@ -472,33 +847,41 @@ addEventListener('mousemove', e => {
 });
 
 // ---------- Handlingar ----------
-const ray = new THREE.Raycaster(); ray.far = 3.8;
+const ray = new THREE.Raycaster();
 const center = new THREE.Vector2(0, 0);
 function lookTarget() {
-  ray.setFromCamera(center, camera);
-  const objs = resources.filter(r => !r.gone).map(r => r.obj).concat(fires.map(f => f.g));
+  ray.setFromCamera(center, camera); ray.far = Math.max(3.8, tool().reach);
+  const objs = resources.filter(r => !r.gone).map(r => r.obj).concat(fires.map(f => f.g), animals.map(a => a.obj));
   const hit = ray.intersectObjects(objs, true)[0];
   if (!hit) return null;
   let o = hit.object;
-  while (o && !o.userData.res && !fires.some(f => f.g === o)) o = o.parent;
+  while (o && !o.userData.res && !o.userData.animal && !fires.some(f => f.g === o)) o = o.parent;
   if (!o) return null;
+  if (o.userData.animal) return hit.distance <= Math.max(tool().reach, o.userData.animal.state === 'dead' ? 3.2 : 0) ? { animal: o.userData.animal } : null;
   if (o.userData.res) return { res: o.userData.res };
   return { fire: fires.find(f => f.g === o) };
 }
-function interact() {
-  const nowMs = performance.now(); if (nowMs < gatherCd || dead) return;
+function interact(isClick) {
+  if (dead) return;
+  if (isClick && tool().id === 'build') { placeBuilding(); return; }
+  const nowMs = performance.now(); if (nowMs < gatherCd) return;
+  gatherCd = nowMs + (tool().id === 'spear' ? 600 : 420);
+  vmSwing = 1;
   const t = lookTarget(); if (!t) return;
-  gatherCd = nowMs + 380;
+  if (t.animal) {
+    const a = t.animal;
+    if (a.state === 'dead') butcher(a); else hitAnimal(a, tool().dmg);
+    return;
+  }
   if (t.fire) {
     if (inv.wood < 1) { toast('Du behöver trä för att mata elden'); return; }
     inv.wood--; t.fire.fuel = Math.min(300, t.fire.fuel + 45); toast('Elden flammar upp (+45 s)'); return;
   }
   const r = t.res; if (r.type === 'monolith') { toast('En målning från stammens förfäder'); return; }
-  const power = inv.axe ? 2 : 1;
+  const power = tool().gather;
   r.shake = 0.25;
   if (r.type === 'tree') {
-    const got = power; inv.wood += got; r.hp -= power;
-    toast(`+${got} trä`);
+    inv.wood += power; r.hp -= power; toast(`+${power} trä`);
     if (r.hp <= 0) { inv.wood += 2; toast('Trädet föll! +2 trä'); fell(r); }
   } else if (r.type === 'rock') {
     inv.stone += power; r.hp -= power; toast(`+${power} sten`);
@@ -513,20 +896,16 @@ function interact() {
 }
 function fell(r) { r.gone = true; r.falling = 0; }
 function eat() {
-  if (inv.berry < 1) { toast('Du har inga bär'); return; }
   if (stats.hunger > 97) { toast('Du är mätt'); return; }
-  inv.berry--; stats.hunger = Math.min(100, stats.hunger + 9); toast('Mums! +9 hunger');
+  if (inv.cooked > 0) { inv.cooked--; stats.hunger = Math.min(100, stats.hunger + 28); stats.hp = Math.min(100, stats.hp + 6); toast('Stekt kött! +28 hunger'); }
+  else if (inv.berry > 0) { inv.berry--; stats.hunger = Math.min(100, stats.hunger + 9); toast('Mums! +9 hunger'); }
+  else if (inv.meat > 0) { inv.meat--; stats.hunger = Math.min(100, stats.hunger + 10); stats.hp = Math.max(1, stats.hp - 6); toast('Rått kött… magont! +10 hunger, −6 hälsa'); }
+  else toast('Du har ingen mat');
 }
-function craftAxe() {
-  if (inv.axe) { toast('Du har redan en stenyxa'); return; }
-  if (inv.wood < 3 || inv.stone < 2) { toast('Stenyxa kräver 3 trä och 2 sten'); return; }
-  inv.wood -= 3; inv.stone -= 2; inv.axe = true; toast('Du tillverkade en stenyxa! Dubbel insamling.');
-}
-function placeFire() {
-  if (inv.wood < 5 || inv.stone < 3) { toast('Lägereld kräver 5 trä och 3 sten'); return; }
-  const dir = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
-  const x = player.pos.x + dir.x * 2.6, z = player.pos.z + dir.z * 2.6;
-  inv.wood -= 5; inv.stone -= 3; buildFire(x, z); toast('Lägereld byggd!');
+function cook() {
+  if (!burningFireNear(player.pos.x, player.pos.z, 3.5)) { toast('Ställ dig vid en brinnande eld för att laga mat'); return; }
+  if (inv.meat < 1) { toast('Du har inget rått kött'); return; }
+  const n = inv.meat; inv.cooked += n; inv.meat = 0; toast(`Du stekte ${n} kött över elden`);
 }
 
 // ---------- Kraftfält vid världens kant ----------
@@ -556,6 +935,14 @@ function launchToCenter() {
   requestAnimationFrame(() => { f.style.transition = 'opacity .9s'; f.style.opacity = 0; });
 }
 
+// ---------- Start ----------
+buildViewModel(); renderHotbar(); makeGhost(); selectTool(0);
+// några djur från början (inte för nära start)
+spawnAnimal('boar', 30, 22); spawnAnimal('boar', 33, 25); spawnAnimal('boar', -40, -30);
+spawnAnimal('bear', -70, 60); spawnAnimal('bear', 90, 80);
+spawnAnimal('wolf', -80, -70); spawnAnimal('wolf', -82, -73); spawnAnimal('wolf', -78, -74);
+let popT = 0;
+
 // ---------- Loop ----------
 const clock = new THREE.Clock();
 let lastPrompt = '';
@@ -571,6 +958,7 @@ function loop() {
     timeOfDay = (timeOfDay + dt / DAY_LEN) % 1;
     if (timeOfDay < prev) dayCount++;
     if (prev < 0.75 && timeOfDay >= 0.75) toast('Solen går ner – se till att ha en eld!');
+    if (prev < 0.8 && timeOfDay >= 0.8) toast('Du hör vargar yla i mörkret…');
     if (prev < 0.25 && timeOfDay >= 0.25) toast(`Gryning – du överlevde natten! (Dag ${dayCount})`);
 
     // rörelse
@@ -593,6 +981,10 @@ function loop() {
         const dx = nx - r.obj.position.x, dz = nz - r.obj.position.z, d = Math.hypot(dx, dz), min = r.radius + 0.4;
         if (d < min && d > 0.0001) { nx = r.obj.position.x + dx / d * min; nz = r.obj.position.z + dz / d * min; }
       }
+      for (const ob of obstacles) {         // byggnader
+        const dx = nx - ob.x, dz = nz - ob.z, d = Math.hypot(dx, dz), min = ob.r + 0.35;
+        if (d < min && d > 0.0001) { nx = ob.x + dx / d * min; nz = ob.z + dz / d * min; }
+      }
       if (Math.abs(nx) > lim || Math.abs(nz) > lim) {
         nx = THREE.MathUtils.clamp(nx, -lim, lim); nz = THREE.MathUtils.clamp(nz, -lim, lim);
         player.pos.x = nx; player.pos.z = nz;
@@ -608,22 +1000,29 @@ function loop() {
       if (player.flying && player.flyT > 0.3) { player.flying = false; player.vel.x = player.vel.z = 0; toast('Duns! Du landade mitt i världen.'); }
     }
 
+    // djur
+    popT -= dt; if (popT <= 0) { populate(sky.night); popT = 5; }
+    updateAnimals(dt, sky.night);
+
     // överlevnad
-    let nearFire = false;
-    for (const f of fires) if (f.fuel > 0 && Math.hypot(f.x - player.pos.x, f.z - player.pos.z) < 6) nearFire = true;
+    const nearFire = !!burningFireNear(player.pos.x, player.pos.z, 6);
+    const inHut = inBuilding('hut', 2.0), underShelter = inBuilding('shelter', 2.6);
     const inWater = groundY(player.pos.x, player.pos.z) < -1.6;
     stats.hunger = Math.max(0, stats.hunger - (sprint ? 0.55 : 0.32) * dt);
     if (nearFire) stats.warmth = Math.min(100, stats.warmth + 7 * dt);
-    else if (sky.night) stats.warmth = Math.max(0, stats.warmth - 1.1 * dt);
+    else if (inHut) stats.warmth = Math.min(100, stats.warmth + 3 * dt);
+    else if (sky.night) stats.warmth = Math.max(0, stats.warmth - 1.1 * dt * (underShelter ? 0.4 : 1) * (tool().id === 'torch' ? 0.6 : 1));
     else stats.warmth += (75 - stats.warmth) * 0.05 * dt;
     if (inWater) stats.warmth = Math.max(0, stats.warmth - 4 * dt);
-    if (stats.hunger <= 0 || stats.warmth <= 0) stats.hp = Math.max(0, stats.hp - 2.5 * dt);
+    if (stats.hunger <= 0 || stats.warmth <= 0) { stats.hp = Math.max(0, stats.hp - 2.5 * dt); deathCause = 'Kyla och hunger är farligare än man tror.'; }
     else if (stats.hunger > 50 && stats.warmth > 50) stats.hp = Math.min(100, stats.hp + 0.6 * dt);
     if (stats.hp <= 0) die();
 
-    const t = lookTarget();
+    updateGhost();
+    const t = tool().id === 'build' ? null : lookTarget();
     let p = '';
-    if (t && t.fire) p = `Lägereld (${Math.ceil(t.fire.fuel)} s) – [E] lägg på trä`;
+    if (t && t.fire) p = `Lägereld (${Math.ceil(t.fire.fuel)} s) – [E] lägg på trä` + (inv.meat ? ' · [F] stek kött' : '');
+    else if (t && t.animal) p = t.animal.state === 'dead' ? `[E] Slakta ${t.animal.info.name.toLowerCase()}` : `${t.animal.info.name} (${Math.max(0, Math.ceil(t.animal.hp))}/${t.animal.info.hp}) – [Klick] anfall`;
     else if (t && t.res.type === 'monolith') p = 'Målad sten';
     else if (t) p = `[Klick/E] ${t.res.label}`;
     if (p !== lastPrompt) { $('prompt').textContent = p; lastPrompt = p; }
@@ -663,6 +1062,18 @@ function loop() {
   const bob = moving ? Math.sin(now * 10) * 0.05 : 0;
   camera.position.set(player.pos.x, player.pos.y + 1.7 + bob, player.pos.z);
   camera.rotation.set(player.pitch, player.yaw, player.flying ? Math.sin(player.flyT * 2.2) * 0.35 : 0);
+
+  // verktyget i handen: gungning + sving
+  vmSwing = Math.max(0, vmSwing - dt * 3.2);
+  const sw = Math.sin((1 - vmSwing) * Math.PI) * (vmSwing > 0 ? 1 : 0);
+  vm.position.set(VM_BASE.x, VM_BASE.y + (moving ? Math.sin(now * 10) * 0.018 : Math.sin(now * 1.6) * 0.006), VM_BASE.z);
+  if (tool().id === 'spear') { vm.rotation.set(0, 0, 0); vm.position.z = VM_BASE.z - sw * 0.45; }
+  else vm.rotation.set(-sw * 1.1, sw * 0.25, -sw * 0.15);
+  if (torchLight) {
+    torchLight.intensity = 1.6 + Math.sin(now * 17) * 0.25;
+    vm.traverse(m => { if (m.userData.flame) m.scale.y = 1 + Math.sin(now * (m.userData.flame === 1 ? 14 : 21)) * 0.15; });
+  }
+
   fieldTex.offset.y = now * 0.05;
   const edge = Math.max(Math.abs(player.pos.x), Math.abs(player.pos.z));
   fieldMat.opacity = 0.18 + 0.55 * THREE.MathUtils.clamp((edge - (FIELD - 30)) / 30, 0, 1) + Math.sin(now * 3) * 0.04;
@@ -674,12 +1085,14 @@ function die() {
   if (document.exitPointerLock) document.exitPointerLock();
   overlay.style.display = 'flex';
   overlay.querySelector('h1').textContent = 'DU DOG';
-  overlay.querySelector('.sub').textContent = `Du överlevde till dag ${dayCount}. Kyla och hunger är farligare än man tror.`;
+  overlay.querySelector('.sub').textContent = `Du överlevde till dag ${dayCount}. ${deathCause}`;
   overlay.querySelector('.keys').style.display = 'none';
   $('gotext').textContent = 'Klicka för att försöka igen';
 }
 // testkrok för automatiska tester
-window.__game = { buildFire, toast, launchToCenter, player, stats, inv, resources, fires, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
+window.__game = { buildFire, toast, launchToCenter, player, stats, inv, resources, fires, animals, buildings, spawnAnimal, hitAnimal,
+  selectTool, cycleTool, craft, interact, placeBuilding, BUILDS, setBuild: i => { buildSel = i; makeGhost(); renderBuildbar(); },
+  tool, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
 loop();
 })();
 </script>

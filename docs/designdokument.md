@@ -140,12 +140,36 @@ Referens: `art/grottmalning_roller.svg`. Äldre stilförslag finns i `art/karakt
 
 1. **Prototyp 0.1** ✅ Gå runt, samla trä och sten, tända eld, hunger och värme, dag och natt.
 2. **Prototyp 0.2** ✅ Världen i grottmålningsstil, målade stenar, ny meny.
-3. **Prototyp 0.3:** Djur att jaga, tillverka spjut, tillaga mat.
-4. **Prototyp 0.4:** Bygga första byggnaderna, eldhjärta och tidsålder 1 → 2.
+3. **Prototyp 0.3** ✅ Djur (varg, björn, vildsvin) med beteenden, jakt och slakt, stekt kött, verktygsfält med mushjul, verktyg synligt i handen (hand, stenyxa, spjut, fackla), byggande (lägereld, vindskydd, hydda, palissad, totempåle).
+4. **Prototyp 0.4:** Eldhjärta och tidsålder 1 → 2, pilbåge, fällor, skinnkläder.
 5. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
 6. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
 
-## 12. Öppna frågor
+## 12. Prototyp 0.3 – hur det fungerar nu
+
+**Verktyg** (byt med mushjulet eller 1–5, det valda verktyget syns i handen):
+
+| Verktyg | Tillverkas | Effekt |
+|---------|-----------|--------|
+| Hand | – | Samlar och slår svagt |
+| Stenyxa | C: 3 trä, 2 sten | Dubbel insamling, skada 8 |
+| Spjut | V: 4 trä, 2 sten | Lång räckvidd (4,6 m), skada 15 |
+| Fackla | T: 3 trä | Ljus, mindre kyla, vargar håller avstånd |
+| Bygga | – | Spökbild av byggnaden, R byter, klick bygger |
+
+**Djur:**
+
+| Djur | Beteende | Ger |
+|------|----------|-----|
+| Varg | Flockar om 3. Jagar på natten, skygg på dagen. Rädd för eld och fackla | 1 kött, 2 skinn, 2 ben |
+| Björn | Vaktar revir och jagar den som kommer nära. Rädd för eld | 5 kött, 4 skinn, 3 ben |
+| Vildsvin | Fridfullt, men laddar när det blir skadat | 4 kött, 1 skinn, 1 ben |
+
+**Byggnader:** Lägereld (5 trä, 3 sten), Vindskydd (8 trä, mindre nattkyla), Hydda (16 trä, 4 sten, 2 skinn, varm och vargar kommer inte in), Palissad (4 trä, stoppar djur), Totempåle (6 trä, 2 sten).
+
+**Mat:** rått kött ger magont, så stek det vid elden med F. Stekt kött ger mest.
+
+## 13. Öppna frågor
 
 - Förstapersonsvy hela tiden, eller kan man växla till tredje person?
 - Ska man kunna dö permanent, eller återuppstå vid eldhjärtat?
