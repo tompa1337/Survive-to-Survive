@@ -141,9 +141,10 @@ Referens: `art/grottmalning_roller.svg`. Äldre stilförslag finns i `art/karakt
 1. **Prototyp 0.1** ✅ Gå runt, samla trä och sten, tända eld, hunger och värme, dag och natt.
 2. **Prototyp 0.2** ✅ Världen i grottmålningsstil, målade stenar, ny meny.
 3. **Prototyp 0.3** ✅ Djur (varg, björn, vildsvin) med beteenden, jakt och slakt, stekt kött, verktygsfält med mushjul, verktyg synligt i handen (hand, stenyxa, spjut, fackla), byggande (lägereld, vindskydd, hydda, palissad, totempåle).
-4. **Prototyp 0.4:** Eldhjärta och tidsålder 1 → 2, pilbåge, fällor, skinnkläder.
-5. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
-6. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
+4. **Prototyp 0.4** ✅ Rollval, specialbyggnad för varje klass, karta (mini + stor), instruktionssten.
+5. **Prototyp 0.5:** Eldhjärta och tidsålder 1 → 2, pilbåge, skinnkläder.
+6. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
+7. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
 
 ## 12. Prototyp 0.3 – hur det fungerar nu
 
@@ -169,7 +170,42 @@ Referens: `art/grottmalning_roller.svg`. Äldre stilförslag finns i `art/karakt
 
 **Mat:** rått kött ger magont, så stek det vid elden med F. Stekt kött ger mest.
 
-## 13. Öppna frågor
+## 13. Klasser och specialbyggnader (prototyp 0.4)
+
+Man väljer roll på startskärmen. Varje roll har en liten bonus och en **specialbyggnad som bara den rollen kan bygga**. I co-op behöver stammen alltså alla roller för att få allt.
+
+| Roll | Bonus | ★ Specialbyggnad | Kostnad | Effekt |
+|------|-------|------------------|---------|--------|
+| Jägaren | +30 % skada mot djur | **Fällgrop** | 4 trä, 2 sten | Djur som går i den fastnar och tar 40 skada. Gillras om efter 20 s |
+| Samlaren | +1 bär per plock | **Bärodling** | 3 trä, 4 bär | Växer fram 4 bär var 45:e sekund. Skörda med E |
+| Byggaren | Byggen kostar 25 % mindre trä | **Vakttorn** | 14 trä, 4 sten | Visar alla djur inom 90 m på kartan |
+| Hantverkaren | Verktyg kostar 1 trä mindre | **Verkstad** | 8 trä, 6 sten | E förbättrar verktyget i handen (2 ben, 1 sten), högst två gånger: + och ++ |
+| Spejaren | Springer 15 % snabbare | **Varde** | 6 sten | E reser till nästa varde (snabbresa) |
+| Shamanen | Läker dubbelt så snabbt | **Stencirkel** | 10 sten | Läker och värmer alla som står i den |
+
+**Karta:** en minikarta uppe till höger och en stor karta med M. Kartan är målad i grottstil med höjdkurvor, sjön, träd, målade stenar, eldar och byggnader. Djur syns när de är nära dig, och överallt inom 90 m från ett vakttorn.
+
+**Instruktionssten:** står vid startplatsen och visar alla recept, inklusive din rolls specialbyggnad. E öppnar en läsbar version.
+
+## 14. Förslag: Första tidsåldern och eldhjärtat
+
+**Tidsålder 1 – Eldens tid.** Stammen har just flytt och har ingenting. Målet är att slå läger och klara de första nätterna. Allt i prototypen hittills hör hit: samla, verktyg, eld, skydd, de första djuren och specialbyggnaderna. Tidsåldern är klar när:
+1. stammen har byggt **eldhjärtat** tillsammans,
+2. varje roll har byggt sin specialbyggnad, och
+3. stammen har överlevt 3 nätter med eldhjärtat brinnande.
+
+Då kommer **Jägarnas tid** (pilbåge, skinnkläder, mammutjakt).
+
+**Eldhjärtat** är byns stora gemensamma eld och spelets mitt:
+- **Byggs tillsammans:** alla lägger trä och sten i det (t.ex. 40 trä, 25 sten, 6 skinn). Ingen kan bygga det ensam. En stapel visar hur mycket som saknas.
+- **Säker zon:** inom ljuscirkeln (ca 15 m) går inga rovdjur in, och man blir varm.
+- **Återuppståndelse:** den som dör vaknar vid eldhjärtat.
+- **Rollbyte:** här kan man byta roll.
+- **Delad bränsle:** det slocknar om stammen slutar mata det. Då försvinner skyddet, och vargarna kommer.
+- **Växer med stammen:** för varje tidsålder byggs det ut (stenring → stensatt härd med totem → stort eldhus) och en ny bild målas på grottväggen bredvid.
+- **Lyft tidsåldern:** när kraven är uppfyllda offrar stammen resurser i elden och tidsåldern höjs.
+
+## 15. Öppna frågor
 
 - Förstapersonsvy hela tiden, eller kan man växla till tredje person?
 - Ska man kunna dö permanent, eller återuppstå vid eldhjärtat?
