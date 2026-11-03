@@ -143,9 +143,10 @@ Referens: `art/grottmalning_roller.svg`. Äldre stilförslag finns i `art/karakt
 3. **Prototyp 0.3** ✅ Djur (varg, björn, vildsvin) med beteenden, jakt och slakt, stekt kött, verktygsfält med mushjul, verktyg synligt i handen (hand, stenyxa, spjut, fackla), byggande (lägereld, vindskydd, hydda, palissad, totempåle).
 4. **Prototyp 0.4** ✅ Rollval, specialbyggnad för varje klass, karta (mini + stor), instruktionssten.
 5. **Prototyp 0.5** ✅ Eldhjärtat (byggs stegvis, säker zon, återuppståndelse, rollbyte, gemensamt bränsle) och tidsålder 1 → 2 med pilbåge och skinnkläder.
-6. **Prototyp 0.6:** Mammutjakt (målet i Jägarnas tid).
-7. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
-8. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
+6. **Prototyp 0.5.1** ✅ Kasta spjut och skjuta pilbåge med högerklick (laddning), pilar som resurs, plocka upp spjut och pilar.
+7. **Prototyp 0.6:** Mammutjakt (målet i Jägarnas tid).
+8. **Motorval:** flytta till Godot eller Unreal, få 2 spelare online samtidigt.
+9. **Vertical slice:** tidsålder 1–2, 6 spelare, ett nattanfall, mammutjakt.
 
 ## 12. Prototyp 0.3 – hur det fungerar nu
 
@@ -214,7 +215,17 @@ Då kommer **Jägarnas tid** (pilbåge, skinnkläder, mammutjakt).
 - Offret är 20 trä, 10 sten, 4 skinn och 4 ben. Därefter visas "JÄGARNAS TID" på skärmen, eldhjärtat växer, och en ring av resta stenar och två nya målade stenar dyker upp.
 - **Nytt i tidsålder 2:** Pilbåge [B] (5 trä, 2 skinn), som skjuter pilar upp till 32 m och som träd stoppar, och Skinnkläder [K] (4 skinn, 2 ben), som halverar kylan på natten.
 
-## 15. Öppna frågor
+## 15. Kast och skott (prototyp 0.5.1)
+
+- **Vänsterklick** är närstrid: hugga, stöta, slå.
+- **Håll högerklick** med spjut eller pilbåge för att ladda. En mätare under siktet visar kraften. Släpp för att kasta eller skjuta. Ju längre du håller, desto längre och hårdare flyger det (spjut cirka 8–30 m, pilar cirka 20–60 m).
+- Spjut och pilar flyger med tyngdkraft, så på långa avstånd måste man sikta lite högre.
+- **Skada:** spjut 18–42, pil 8–24 (Jägaren +30 %, Verkstadens förbättringar +50 % per steg).
+- **Pilar [P]:** 1 trä + 1 sten ger 3 pilar (Hantverkaren får 4).
+- **Plocka upp:** spjut och pilar ligger kvar där de landar, i marken, i träd eller bredvid djuret de träffade. De plockas upp automatiskt när man går över dem och syns som vita markeringar på minikartan. En pil som träffar ett djur går sönder i 30 % av fallen.
+- Har man kastat sitt enda spjut byts verktyget till handen tills man plockat upp det igen.
+
+## 16. Öppna frågor
 
 - Förstapersonsvy hela tiden, eller kan man växla till tredje person?
 - Ska man kunna dö permanent, eller återuppstå vid eldhjärtat?

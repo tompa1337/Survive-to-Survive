@@ -40,6 +40,8 @@
   .hopt .dim { opacity: .5; }
   .fuel { height: 14px; border: 2px solid #231812; border-radius: 8px 3px 9px 4px; background: rgba(35,24,18,.25); overflow: hidden; margin: 6px 0; }
   .fuel div { height: 100%; background: linear-gradient(90deg, #9a321e, #e0a23a); }
+  #charge { position: absolute; left: 50%; top: calc(50% + 18px); width: 130px; height: 9px; margin-left: -65px; border: 2px solid #231812; border-radius: 6px 2px 7px 3px; background: rgba(35,24,18,.45); display: none; overflow: hidden; }
+  #charge div { height: 100%; width: 0; background: linear-gradient(90deg, #c98a1f, #9a321e); }
   #minimap { position: absolute; top: 70px; right: 16px; width: 170px; height: 170px; border-radius: 50%; border: 3px solid #231812; box-shadow: 0 0 0 2px #9a321e, 0 2px 8px rgba(0,0,0,.5); }
   #mapkey { position: absolute; top: 244px; right: 16px; width: 170px; text-align: center; font-size: 11px; opacity: .85; text-shadow: 0 1px 2px #000; }
   #rolechip { margin-top: 4px; font-size: 13px; display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 2px #000; }
@@ -97,6 +99,7 @@
   <canvas id="minimap" width="170" height="170"></canvas>
   <div id="mapkey">[M] stor karta</div>
   <div id="cross"></div>
+  <div id="charge"><div></div></div>
   <div id="prompt"></div>
   <div id="toasts"></div>
   <div id="buildbar"></div>
@@ -105,7 +108,7 @@
   <div id="help">
     <kbd>Mushjul</kbd>/<kbd>1–5</kbd> byt verktyg · <kbd>Klick</kbd> använd<br>
     <kbd>E</kbd> samla / slakta / mata elden · <kbd>Q</kbd> ät · <kbd>M</kbd> karta<br>
-    <kbd>C</kbd> yxa · <kbd>V</kbd> spjut · <kbd>T</kbd> fackla · <kbd>F</kbd> stek kött vid eld<br><kbd>B</kbd> pilbåge · <kbd>K</kbd> skinnkläder (tidsålder 2)<br>
+    <kbd>C</kbd> yxa · <kbd>V</kbd> spjut · <kbd>T</kbd> fackla · <kbd>F</kbd> stek kött vid eld<br><kbd>Håll högerklick</kbd> kasta spjut / skjut pil · <kbd>P</kbd> pilar<br><kbd>B</kbd> pilbåge · <kbd>K</kbd> skinnkläder (tidsålder 2)<br>
     <kbd>Shift</kbd> spring · <kbd>Space</kbd> hoppa · <kbd>Esc</kbd> paus
   </div>
 </div>
@@ -126,6 +129,7 @@
       <kbd>R</kbd><span>Byt byggnad (med Bygga i handen)</span>
       <kbd>F</kbd><span>Stek kött vid elden</span>
       <kbd>Q</kbd><span>Ät (stekt kött är bäst)</span>
+      <kbd>Håll högerklick</kbd><span>Kasta spjut / skjut pil – ju längre, desto längre</span>
     </div>
     <div id="rolepick"></div>
     <div class="go" id="gotext">Klicka för att börja</div>
@@ -426,8 +430,8 @@ for (let i = 0; i < 26; i++) {
 const player = { pos: new THREE.Vector3(0, 0, 0), vel: new THREE.Vector3(), yaw: Math.PI, pitch: 0, onGround: false };
 player.pos.y = groundY(0, 0);
 const stats = { hp: 100, hunger: 85, warmth: 80 };
-const inv = { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, hide: 0, bone: 0, axe: false, spear: false, torch: false, bow: false, clothes: false };
-const upg = { hand: 0, axe: 0, spear: 0, torch: 0 };     // förbättringar från Verkstaden
+const inv = { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, hide: 0, bone: 0, axe: false, spear: 0, torch: false, bow: false, clothes: false, arrows: 0 };
+const upg = { hand: 0, axe: 0, spear: 0, torch: 0, bow: 0 };     // förbättringar från Verkstaden
 const ROLES = [
   { id: 'Jägaren',      col: 0x9a321e, css: '#9a321e', bonus: '+30 % skada mot djur',         special: 'trap' },
   { id: 'Samlaren',     col: 0xc98a1f, css: '#c98a1f', bonus: '+1 bär varje gång du plockar', special: 'garden' },
@@ -489,13 +493,13 @@ const TOOLS = [
   { id: 'spear', name: 'Spjut',   dmg: 15, reach: 4.6, gather: 1, cost: { wood: 4, stone: 2 }, key: 'V' },
   { id: 'torch', name: 'Fackla',  dmg: 4,  reach: 2.6, gather: 1, cost: { wood: 3 }, key: 'T' },
   { id: 'build', name: 'Bygga',   dmg: 0,  reach: 3.0, gather: 1 },
-  { id: 'bow',   name: 'Pilbåge', dmg: 12, reach: 32,  gather: 1, cost: { wood: 5, hide: 2 }, key: 'B', age: 2 },
+  { id: 'bow',   name: 'Pilbåge', dmg: 3,  reach: 2.6, gather: 1, cost: { wood: 5, hide: 2 }, key: 'B', age: 2 },
 ];
 let sel = 0;
 const tool = () => TOOLS[sel];
 const toolDmg = () => Math.round(tool().dmg * (1 + 0.5 * (upg[tool().id] || 0)) * (role.id === 'Jägaren' ? 1.3 : 1));
 const toolGather = () => tool().gather + (upg[tool().id] || 0);
-const toolName = t => t.name + '+'.repeat(upg[t.id] || 0);
+const toolName = t => t.name + '+'.repeat(upg[t.id] || 0) + (t.id === 'spear' && inv.spear > 1 ? ` (${inv.spear})` : '') + (t.id === 'bow' && inv.bow ? ` · ${inv.arrows} pilar` : '');
 const owned = t => t.id === 'hand' || t.id === 'build' || inv[t.id];
 const RES_NAMES = { wood: 'trä', stone: 'sten', berry: 'bär', hide: 'skinn', bone: 'ben', meat: 'kött' };
 const costText = c => Object.entries(c).map(([k, v]) => `${v} ${RES_NAMES[k]}`).join(', ');
@@ -504,7 +508,7 @@ const pay = c => Object.entries(c).forEach(([k, v]) => inv[k] -= v);
 
 function selectTool(i) {
   if (i < 0 || i >= TOOLS.length || !owned(TOOLS[i])) return;
-  sel = i; buildViewModel(); renderHotbar();
+  sel = i; charging = null; charge = 0; $('charge').style.display = 'none'; buildViewModel(); renderHotbar();
   $('buildbar').style.display = tool().id === 'build' ? 'flex' : 'none';
   if (tool().id === 'build') renderBuildbar();
   if (ghost) ghost.visible = tool().id === 'build';
@@ -521,7 +525,7 @@ function craft(id) {
   if (inv[id]) { toast(`Du har redan ${t.name.toLowerCase()}`); selectTool(i); return; }
   const c = effCost(t.cost, 'tool');
   if (!canPay(c)) { toast(`${t.name} kräver ${costText(c)}`); return; }
-  pay(c); inv[id] = true; toast(`Du tillverkade: ${t.name}!`); selectTool(i);
+  pay(c); inv[id] = id === 'spear' ? 1 : true; toast(`Du tillverkade: ${t.name}!`); selectTool(i);
 }
 
 // ---------- Verktyget i handen (förstapersonsvy) ----------
@@ -558,8 +562,8 @@ function buildViewModel() {
     const arc = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.022, 5, 14, Math.PI), matHandle);
     arc.rotation.set(0, Math.PI / 2, Math.PI / 2); arc.position.set(-0.02, 0.05, -0.05); g.add(arc);
     const str = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.84, 3), toon(PAL.wht)); str.position.set(-0.02, 0.05, 0.09); str.userData.noOutline = true; g.add(str);
-    const ar = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.75, 4), matHandle); ar.rotation.x = Math.PI / 2; ar.position.set(-0.02, 0.05, -0.25); g.add(ar);
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.08, 4), matDark); tip.rotation.x = -Math.PI / 2; tip.position.set(-0.02, 0.05, -0.64); g.add(tip);
+    const ar = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.75, 4), matHandle); ar.rotation.x = Math.PI / 2; ar.position.set(-0.02, 0.05, -0.25); ar.name = 'nock'; g.add(ar);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.08, 4), matDark); tip.rotation.x = -Math.PI / 2; tip.position.set(-0.02, 0.05, -0.64); tip.name = 'nocktip'; g.add(tip);
   } else if (id === 'build') {
     for (let i = 0; i < 3; i++) {
       const s = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 5), matHandle);
@@ -987,6 +991,7 @@ function updateUI(night) {
   if (key !== lastInvKey) {
     lastInvKey = key;
     const rows = [['Trä', inv.wood], ['Sten', inv.stone], ['Bär', inv.berry], ['Rått kött', inv.meat], ['Stekt kött', inv.cooked], ['Skinn', inv.hide], ['Ben', inv.bone]];
+    if (inv.bow || inv.arrows) rows.push(['Pilar', inv.arrows]);
     if (inv.clothes) rows.push(['Skinnkläder', '✓']);
     $('res').innerHTML = rows.map(([n, v]) => `<div class="${v ? '' : 'zero'}">${n}<b>${v}</b></div>`).join('');
     renderHotbar(); if (tool().id === 'build') renderBuildbar();
@@ -1035,13 +1040,20 @@ addEventListener('keydown', e => {
   if (/^Digit[1-6]$/.test(e.code)) selectTool(+e.code.slice(5) - 1);
   if (e.code === 'KeyB') craft('bow');
   if (e.code === 'KeyK') craftClothes();
+  if (e.code === 'KeyP') craftArrows();
   if (e.code === 'Space' && player.onGround) { player.vel.y = 6.5; player.onGround = false; }
   if (e.code === 'Escape' && !pointerOk) pause();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('wheel', e => { if (running) cycleTool(e.deltaY > 0 ? 1 : -1); }, { passive: true });
-canvas.addEventListener('mousedown', () => { dragging = true; dragMoved = 0; });
-addEventListener('mouseup', () => {
+addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('mousedown', e => {
+  if (e.button === 2) { if (running && !uiOpen) startCharge(); return; }
+  dragging = true; dragMoved = 0;
+});
+addEventListener('mouseup', e => {
+  if (e.button === 2) { if (running) releaseCharge(); return; }
+  if (e.button !== 0) return;
   if (running && (document.pointerLockElement || dragMoved < 6)) interact(true);
   dragging = false;
 });
@@ -1076,7 +1088,6 @@ function interact(isClick) {
   if (dead) return;
   if (uiOpen) { closePanel(); return; }
   if (isClick && tool().id === 'build') { placeBuilding(); return; }
-  if (isClick && tool().id === 'bow') { shootArrow(); return; }
   const nowMs = performance.now(); if (nowMs < gatherCd) return;
   gatherCd = nowMs + (tool().id === 'spear' ? 600 : 420);
   vmSwing = 1;
@@ -1189,6 +1200,7 @@ let mapT = 0;
 const towerSees = (x, z) => buildings.some(b => b.id === 'tower' && Math.hypot(b.x - x, b.z - z) < 90);
 const A_COL = { wolf: '#8d939c', bear: '#6b3f22', boar: '#9a321e' };
 function drawMarkers(c, toPx, scale, showAll) {
+  for (const p of projectiles) { if (p.state !== 'stuck') continue; const [x, y] = toPx(p.pos.x, p.pos.z); c.fillStyle = '#f3e8cf'; c.strokeStyle = '#231812'; c.lineWidth = 1.5; c.beginPath(); if (p.kind === 'spear') { c.moveTo(x, y - 5); c.lineTo(x + 3, y); c.lineTo(x, y + 5); c.lineTo(x - 3, y); } else c.arc(x, y, 2, 0, 7); c.fill(); c.stroke(); }
   if (!heart) { const [x, y] = toPx(HX, HZ); c.strokeStyle = '#9a321e'; c.lineWidth = 2; c.setLineDash([4, 3]); c.beginPath(); c.arc(x, y, 7, 0, 7); c.stroke(); c.setLineDash([]); }
   for (const f of fires) { const [x, y] = toPx(f.x, f.z), r = f.heart ? 7 : 4; c.fillStyle = f.fuel > 0 ? '#e0a23a' : '#6b3f22'; c.strokeStyle = f.heart ? '#9a321e' : '#231812'; c.lineWidth = f.heart ? 3 : 2; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke(); }
   for (const b of buildings) {
@@ -1259,7 +1271,9 @@ function renderRecipes() {
   h += '<h3>Eldhjärtat och tidsåldrar</h3>';
   h += card(BICON.fire, 'Eldhjärtat', `${costText(HEART_COST)} – lägg i med E på platsen`, 'byggs tillsammans: säker zon, värme, återuppståndelse, rollbyte', true);
   h += card(ICON.build, 'Lyft tidsåldern', `offra ${costText(AGE_COST)} i eldhjärtat`, 'när alla krav i listan högst upp är klara', true);
-  h += card(ICON.bow, 'Pilbåge [B]' + (age < 2 ? ' – tidsålder 2' : ''), costText(TOOLS.find(t => t.id === 'bow').cost), 'skjut djur på 30 m avstånd');
+  h += card(ICON.bow, 'Pilbåge [B]' + (age < 2 ? ' – tidsålder 2' : ''), costText(TOOLS.find(t => t.id === 'bow').cost), 'håll högerklick för att spänna, släpp för att skjuta');
+  h += card(ICON.spear, 'Pilar [P]', '1 trä, 1 sten → 3 pilar', 'plocka upp dem igen där de landar');
+  h += card(ICON.spear, 'Kasta spjutet', 'håll högerklick med spjutet', 'längre tryck = längre kast · gå fram och plocka upp det');
   h += card(BICON.shelter, 'Skinnkläder [K]' + (age < 2 ? ' – tidsålder 2' : ''), costText(CLOTHES_COST), 'halverar kylan på natten');
   h += '<h3>Mat och överlevnad</h3>';
   h += card(ICON.torch, 'Stek kött [F]', 'stå vid en brinnande eld', 'stekt kött mättar mest');
@@ -1419,30 +1433,109 @@ function craftClothes() {
   if (!canPay(CLOTHES_COST)) { toast(`Skinnkläder kräver ${costText(CLOTHES_COST)}`); return; }
   pay(CLOTHES_COST); inv.clothes = true; toast('Du syr skinnkläder – nätterna känns mindre kalla');
 }
-// pilar
-const arrows = [];
-const arrowGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.8, 4); arrowGeo.rotateX(Math.PI / 2);
-const arrowMat = toon(PAL.brn);
-let bowCd = 0;
-function shootArrow() {
-  const nowMs = performance.now(); if (nowMs < bowCd) return; bowCd = nowMs + 850; vmSwing = 1;
-  ray.setFromCamera(center, camera); ray.far = 32;
-  const objs = resources.filter(r => !r.gone).map(r => r.obj).concat(animals.filter(a => a.state !== 'dead').map(a => a.obj));
-  const hit = ray.intersectObjects(objs, true)[0];
-  const from = camera.position.clone().add(ray.ray.direction.clone().multiplyScalar(0.8));
-  const to = hit ? hit.point.clone() : camera.position.clone().add(ray.ray.direction.clone().multiplyScalar(32));
-  const m = new THREE.Mesh(arrowGeo, arrowMat); m.position.copy(from); m.lookAt(to); scene.add(m);
-  let target = null;
-  if (hit) { let o = hit.object; while (o && !o.userData.animal) o = o.parent; if (o) target = o.userData.animal; }
-  arrows.push({ m, from, to, t: 0, dur: Math.max(0.08, from.distanceTo(to) / 60), target, life: 4 });
+// ---------- Kast och skott (spjut och pilar) ----------
+const projectiles = [];                 // { kind, m, pos, vel, state: 'fly'|'stuck', power }
+let charging = null, charge = 0;
+const A_HIT = { wolf: [0.85, 0.8], bear: [1.3, 1.3], boar: [0.7, 0.8] };   // [höjd till mitten, radie]
+function makeSpearMesh() {
+  const g = new THREE.Group();
+  const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.9, 5), matHandle); sh.rotation.x = Math.PI / 2; g.add(sh);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.26, 4), matDark); tip.rotation.x = Math.PI / 2; tip.position.z = 1.07; g.add(tip);
+  const tie = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.014, 4, 8), toon(PAL.red)); tie.position.z = 0.88; g.add(tie);
+  outline(g, 1.15); return g;
 }
-function updateArrows(dt) {
-  for (const a of [...arrows]) {
-    if (a.t < 1) {
-      a.t = Math.min(1, a.t + dt / a.dur); a.m.position.lerpVectors(a.from, a.to, a.t);
-      if (a.t >= 1 && a.target && a.target.state !== 'dead') { hitAnimal(a.target, toolDmg()); scene.remove(a.m); arrows.splice(arrows.indexOf(a), 1); continue; }
-    } else if ((a.life -= dt) <= 0) { scene.remove(a.m); arrows.splice(arrows.indexOf(a), 1); }
+function makeArrowMesh() {
+  const g = new THREE.Group();
+  const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.85, 4), matHandle); sh.rotation.x = Math.PI / 2; g.add(sh);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.1, 4), matDark); tip.rotation.x = Math.PI / 2; tip.position.z = 0.47; g.add(tip);
+  for (const r of [0, Math.PI / 2]) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.005, 0.16), toon(PAL.red)); f.rotation.z = r; f.position.z = -0.36; g.add(f); }
+  outline(g, 1.25); return g;
+}
+function startCharge() {
+  const id = tool().id;
+  if (id === 'spear' && inv.spear > 0) charging = 'spear';
+  else if (id === 'bow' && inv.bow) { if (inv.arrows < 1) { toast('Du har inga pilar – tillverka med [P] (1 trä, 1 sten)'); return; } charging = 'bow'; }
+  else return;
+  charge = 0; $('charge').style.display = 'block';
+}
+function releaseCharge() {
+  if (!charging) return;
+  const kind = charging === 'bow' ? 'arrow' : charging, c = charge; charging = null; charge = 0; $('charge').style.display = 'none';
+  if (kind === 'spear' && inv.spear < 1) return;
+  if (kind === 'arrow' && inv.arrows < 1) return;
+  ray.setFromCamera(center, camera);
+  const dir = ray.ray.direction.clone();
+  const pos = camera.position.clone().addScaledVector(dir, 0.7); pos.y -= 0.12;
+  const speed = kind === 'spear' ? 8 + 18 * c : 18 + 34 * c;
+  const m = kind === 'spear' ? makeSpearMesh() : makeArrowMesh();
+  m.position.copy(pos); scene.add(m);
+  projectiles.push({ kind, m, pos, vel: dir.multiplyScalar(speed), state: 'fly', power: c });
+  vmSwing = 1;
+  if (kind === 'spear') { inv.spear--; if (inv.spear < 1) selectTool(0); else renderHotbar(); }
+  else { inv.arrows--; renderHotbar(); }
+}
+function segSphere(a, b, c, r) {               // träffar sträckan a→b en sfär?
+  const ab = tmpV.copy(b).sub(a), t = THREE.MathUtils.clamp(c.clone().sub(a).dot(ab) / Math.max(1e-6, ab.lengthSq()), 0, 1);
+  return a.clone().addScaledVector(ab, t).distanceTo(c) < r;
+}
+function stick(p, x, y, z) {
+  p.state = 'stuck'; p.pos.set(x, y, z); p.m.position.copy(p.pos); p.stuckT = 0;
+}
+function updateProjectiles(dt) {
+  const hm = role.id === 'Jägaren' ? 1.3 : 1;
+  for (const p of [...projectiles]) {
+    if (p.state === 'fly') {
+      const N = 5, h = dt / N;
+      for (let k = 0; k < N && p.state === 'fly'; k++) {
+        const prev = p.pos.clone();
+        p.vel.y -= 9.8 * h; p.pos.addScaledVector(p.vel, h);
+        for (const a of animals) {
+          if (a.state === 'dead') continue;
+          const [hy, rr] = A_HIT[a.kind], c = a.obj.position.clone(); c.y += hy;
+          if (!segSphere(prev, p.pos, c, rr)) continue;
+          const dmg = Math.round((p.kind === 'spear' ? 18 + 24 * p.power : 8 + 16 * p.power) * (1 + 0.5 * (upg[p.kind === 'spear' ? 'spear' : 'bow'] || 0)) * hm);
+          a.angry = 25; hitAnimal(a, dmg);
+          const ox = a.obj.position.x + (Math.random() - 0.5) * 1.2, oz = a.obj.position.z + (Math.random() - 0.5) * 1.2;
+          if (p.kind === 'arrow' && Math.random() < 0.3) { scene.remove(p.m); projectiles.splice(projectiles.indexOf(p), 1); p.state = 'gone'; toast('Pilen gick sönder'); }
+          else { stick(p, ox, groundY(ox, oz) + 0.25, oz); p.m.rotation.set(-0.9, Math.random() * 6, 0); }
+          break;
+        }
+        if (p.state !== 'fly') break;
+        for (const r of resources) {
+          if (r.gone || r.type === 'bush') continue;
+          const o = r.obj.position, top = r.type === 'tree' ? o.y + 3.6 : o.y + (r.type === 'rock' ? 1.2 : 3.4);
+          if (Math.hypot(p.pos.x - o.x, p.pos.z - o.z) < r.radius + 0.12 && p.pos.y < top && p.pos.y > o.y - 0.5) {
+            p.pos.addScaledVector(p.vel, -h * 0.5); stick(p, p.pos.x, p.pos.y, p.pos.z); break;
+          }
+        }
+        if (p.state !== 'fly') break;
+        const gy = groundY(p.pos.x, p.pos.z);
+        if (p.pos.y <= gy + 0.05) { stick(p, p.pos.x, gy + (p.kind === 'spear' ? 0.35 : 0.12), p.pos.z); break; }
+        if (Math.abs(p.pos.x) > FIELD - 1 || Math.abs(p.pos.z) > FIELD - 1) {
+          const x = THREE.MathUtils.clamp(p.pos.x, -FIELD + 3, FIELD - 3), z = THREE.MathUtils.clamp(p.pos.z, -FIELD + 3, FIELD - 3);
+          stick(p, x, groundY(x, z) + 0.2, z); p.m.rotation.set(-1.2, 0, 0); toast('Kraftfältet stoppade kastet'); break;
+        }
+      }
+      if (p.state === 'fly') { p.m.position.copy(p.pos); p.m.lookAt(tmpV.copy(p.pos).add(p.vel)); }
+    } else if (p.state === 'stuck') {
+      p.stuckT += dt;
+      if (p.stuckT > 0.4 && Math.hypot(p.pos.x - player.pos.x, p.pos.z - player.pos.z) < 1.7 && Math.abs(p.pos.y - player.pos.y) < 2.5) {
+        scene.remove(p.m); projectiles.splice(projectiles.indexOf(p), 1);
+        if (p.kind === 'spear') { inv.spear = (inv.spear | 0) + 1; toast('Du plockade upp spjutet'); if (tool().id === 'hand' && inv.spear === 1) selectTool(TOOLS.findIndex(t => t.id === 'spear')); }
+        else { inv.arrows++; toast('+1 pil'); }
+        renderHotbar();
+      }
+    }
   }
+  if (charging) {
+    charge = Math.min(1, charge + dt / (charging === 'spear' ? 1.2 : 0.9));
+    $('charge').firstChild.style.width = (charge * 100) + '%';
+  }
+}
+function craftArrows() {
+  const c = { wood: 1, stone: 1 };
+  if (!canPay(c)) { toast('Pilar kräver 1 trä och 1 sten'); return; }
+  pay(c); const n = role.id === 'Hantverkaren' ? 4 : 3; inv.arrows += n; toast(`Du täljde ${n} pilar`); renderHotbar();
 }
 renderAgeBox();
 
@@ -1555,7 +1648,7 @@ function loop() {
     if (stats.hp <= 0) die();
 
     updateGhost();
-    updateArrows(dt);
+    updateProjectiles(dt);
     ageT -= dt; if (ageT <= 0) { renderAgeBox(); if (uiOpen === 'heart') renderHeartPanel(); ageT = 0.5; }
     const t = tool().id === 'build' ? null : lookTarget();
     let p = '';
@@ -1616,7 +1709,14 @@ function loop() {
   vmSwing = Math.max(0, vmSwing - dt * 3.2);
   const sw = Math.sin((1 - vmSwing) * Math.PI) * (vmSwing > 0 ? 1 : 0);
   vm.position.set(VM_BASE.x, VM_BASE.y + (moving ? Math.sin(now * 10) * 0.018 : Math.sin(now * 1.6) * 0.006), VM_BASE.z);
-  if (tool().id === 'spear') { vm.rotation.set(0, 0, 0); vm.position.z = VM_BASE.z - sw * 0.45; }
+  if (charging === 'spear') { vm.rotation.set(0.35 * charge, 0, -0.1 * charge); vm.position.z = VM_BASE.z + 0.28 * charge; vm.position.y += 0.08 * charge; }
+  else if (charging === 'bow') {
+    vm.position.x = VM_BASE.x - 0.2 * Math.min(1, charge * 3); vm.rotation.set(0, 0, -0.15);
+    const n = vm.getObjectByName('nock'), nt = vm.getObjectByName('nocktip');
+    if (n) { n.position.z = -0.25 + 0.3 * charge; nt.position.z = -0.64 + 0.3 * charge; }
+  }
+  else if (tool().id === 'spear') { vm.rotation.set(0, 0, 0); vm.position.z = VM_BASE.z - sw * 0.45; }
+  else if (tool().id === 'bow') { vm.rotation.set(0, 0, 0); const n = vm.getObjectByName('nock'), nt = vm.getObjectByName('nocktip'); if (n) { n.position.z = -0.25; nt.position.z = -0.64; n.visible = nt.visible = inv.arrows > 0; } }
   else vm.rotation.set(-sw * 1.1, sw * 0.25, -sw * 0.15);
   if (torchLight) {
     torchLight.intensity = 1.6 + Math.sin(now * 17) * 0.25;
@@ -1649,7 +1749,7 @@ function die() {
 // testkrok för automatiska tester
 window.__game = { buildFire, toast, launchToCenter, player, stats, inv, resources, fires, animals, buildings, spawnAnimal, hitAnimal,
   selectTool, cycleTool, craft, interact, placeBuilding, BUILDS, availBuilds, setBuild: i => { buildSel = i; makeGhost(); renderBuildbar(); },
-  setRole: i => { role = ROLES[i]; applyRole(); }, contributeHeart, ageUp, heartKey, shootArrow, reqs,
+  setRole: i => { role = ROLES[i]; applyRole(); }, contributeHeart, ageUp, heartKey, reqs, startCharge, releaseCharge, craftArrows, projectiles, setCharge: v => { charge = v; }, stepProjectiles: d => updateProjectiles(d), getCharging: () => charging,
   getHeart: () => heart, getAge: () => age, setNights: n => { nightsWithHeart = n; }, craftClothes, HX, HZ, openPanel, closePanel, buildingAction, upg, drawBigMap,
   die, tool, scene, camera, groundY, setTime: t => { timeOfDay = t; }, start };
 loop();

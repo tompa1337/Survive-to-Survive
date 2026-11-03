@@ -17,7 +17,7 @@
 
 Öppna `prototype/index.html` i Chrome eller Edge (dubbelklicka på filen). Inget behöver installeras.
 
-**Kontroller:** WASD gå · mus titta · mushjul/1–5 byt verktyg · klick använd/bygg · E samla/slakta/mata elden · C yxa · V spjut · T fackla · R byt byggnad · M karta · B pilbåge · K skinnkläder · F stek kött · Q ät · Shift spring · Space hoppa
+**Kontroller:** WASD gå · mus titta · mushjul/1–5 byt verktyg · klick använd/bygg · håll högerklick kasta spjut/skjut pil · P pilar · E samla/slakta/mata elden · C yxa · V spjut · T fackla · R byt byggnad · M karta · B pilbåge · K skinnkläder · F stek kött · Q ät · Shift spring · Space hoppa
 
 **Mål:** Överlev nätterna. Utan eld sjunker värmen på natten, och utan mat sjunker hungern.
 
